@@ -1,5 +1,5 @@
 import { AgentManager } from '../agents/AgentManager';
-import { getBuildingByType } from '../world/BuildingRegistry';
+import { getBuildingByType, BUILDINGS } from '../world/BuildingRegistry';
 import { eventBus } from '../simulation/EventBus';
 import { EVENTS } from '../types/events';
 import { BuildingType, WorldStats, Task } from '../types';
@@ -39,22 +39,53 @@ function toolToTaskType(tool: string): 'read' | 'write' | 'bash' | 'search' | 't
   return 'write';
 }
 
+/** Extract just the filename from a path */
+function fileName(input: string): string {
+  if (!input) return '';
+  const parts = input.replace(/\\/g, '/').split('/');
+  return parts[parts.length - 1] || '';
+}
+
 function toolDescription(tool: string, input: string): string {
   const t = tool.toLowerCase();
-  const short = input.length > 60 ? input.substring(0, 57) + '...' : input;
-  if (t === 'read') return `Reading ${short}`;
-  if (t === 'write') return `Writing ${short}`;
-  if (t === 'edit') return `Editing ${short}`;
-  if (t === 'bash') return `$ ${short}`;
-  if (t === 'grep') return `Searching: ${short}`;
-  if (t === 'glob') return `Finding files: ${short}`;
-  if (t === 'agent') return `Spawning agent: ${short}`;
-  if (t === 'websearch') return `Web search: ${short}`;
-  if (t === 'enterplanmode') return 'Entering plan mode...';
-  if (t === 'exitplanmode') return 'Plan complete';
-  if (t === 'askeruserquestion') return 'Asking user...';
-  if (t === 'skill') return `Running skill: ${short}`;
-  return `${tool}: ${short}`;
+  const name = fileName(input);
+
+  if (t === 'read') return `Reading ${name || 'file'}`;
+  if (t === 'write') return `Writing ${name || 'file'}`;
+  if (t === 'edit') return `Editing ${name || 'file'}`;
+  if (t === 'bash') {
+    const raw = input.replace(/\s+2>&1$/, '').trim();
+    if (!raw) return 'Running command';
+    // Replace long paths with just filenames
+    const clean = raw.replace(/[A-Za-z]:[\\\/][^\s"']*/g, (p) => {
+      const parts = p.replace(/\\/g, '/').split('/');
+      return parts[parts.length - 1];
+    }).replace(/\/[^\s"']*\//g, (p) => {
+      const parts = p.split('/').filter(Boolean);
+      return parts[parts.length - 1] + '/';
+    });
+    const parts = clean.split(/\s+/);
+    const cmd = parts[0];
+    if (cmd === 'npx') return `Running ${parts[1] || 'npx'}`;
+    if (cmd === 'npm') return `npm ${parts.slice(1, 3).join(' ')}`;
+    if (cmd === 'git') return `git ${parts.slice(1, 3).join(' ')}`;
+    if (cmd === 'node') return `Running script`;
+    const short = clean.length > 40 ? clean.substring(0, 37) + '...' : clean;
+    return `$ ${short}`;
+  }
+  if (t === 'grep') return `Searching "${input.substring(0, 30)}"`;
+  if (t === 'glob') return 'Finding files';
+  if (t === 'agent') return 'Spawning sub-agent';
+  if (t === 'websearch') return 'Searching the web';
+  if (t === 'webfetch') return 'Fetching web page';
+  if (t === 'enterplanmode') return 'Planning approach';
+  if (t === 'exitplanmode') return 'Plan ready';
+  if (t === 'askeruserquestion') return 'Waiting for user';
+  if (t === 'skill') return `Running skill ${name}`;
+  if (t === 'taskcreate') return 'Creating task';
+  if (t === 'taskupdate') return 'Updating task';
+  if (t === 'taskget' || t === 'tasklist') return 'Checking tasks';
+  return `${tool}`;
 }
 
 // Assign real agent IDs to visual agent slots
@@ -106,6 +137,7 @@ export class RealtimeEngine {
         this.poll();
       }
     }
+
     eventBus.emit(EVENTS.WORLD_STATS_UPDATED, this.stats);
   }
 
@@ -144,6 +176,14 @@ export class RealtimeEngine {
     const slotId = this.getSlotForAgent(ev.agent_id);
     const agent = this.agentManager.getAgent(slotId);
     if (!agent) return;
+
+    // Update agent display name from event if provided
+    if (ev.agent_name && ev.agent_name !== 'Claude') {
+      const htmlUI = (window as any).__htmlUI;
+      if (htmlUI && typeof htmlUI.setAgentDisplayName === 'function') {
+        htmlUI.setAgentDisplayName(slotId, ev.agent_name);
+      }
+    }
 
     if (ev.phase === 'pre') {
       // Tool starting — move agent to the right room
@@ -214,4 +254,5 @@ export class RealtimeEngine {
       this.activeToolByAgent.delete(slotId);
     }
   }
+
 }

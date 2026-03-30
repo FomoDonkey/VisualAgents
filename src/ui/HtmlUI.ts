@@ -120,6 +120,17 @@ export class HtmlUI {
     return this.agentNames.get(id) || id;
   }
 
+  /** Update agent name from live event data */
+  setAgentDisplayName(agentId: string, name: string): void {
+    if (this.agentNames.get(agentId) === name) return;
+    this.agentNames.set(agentId, name);
+    const card = this.agentCards.get(agentId);
+    if (card) {
+      const el = card.querySelector('[data-f="name"]');
+      if (el) el.textContent = name;
+    }
+  }
+
   private loadNames(): void {
     try {
       const saved = localStorage.getItem('va-names');
@@ -263,39 +274,67 @@ export class HtmlUI {
   }
 
   // === EVENTS ===
+  private static readonly TOOL_ICONS: Record<string, string> = {
+    read: '📖', write: '✏️', bash: '⚡', search: '🔍',
+    think: '💭', deploy: '🚀',
+  };
+
   private setupEventListeners(): void {
     eventBus.on(EVENTS.AGENT_TASK_ASSIGNED, (data: { agentId: string; task: any; projectName: string }) => {
       const pal = AGENT_PALETTES.find(a => a.id === data.agentId);
       const name = this.agentNames.get(data.agentId) || pal?.name || data.agentId;
+      const icon = HtmlUI.TOOL_ICONS[data.task.type] || '⚙️';
       const room = ROOM_NAMES[data.task.building] || '';
-      this.addLog(data.agentId, name, pal?.color || '#888', data.task.description, room, data.task.type);
+
+      this.addLog(
+        name, pal?.color || '#888',
+        `${icon} ${data.task.description}`,
+        room,
+        data.task.type
+      );
+
       if (this.fpActive && this.fpAgentId === data.agentId) {
-        this.addFirstPersonFeed(data.task.description, data.task.type === 'think' ? 'think' : '');
+        this.addFirstPersonFeed(`${icon} ${data.task.description}`, data.task.type === 'think' ? 'think' : '');
       }
     });
 
     eventBus.on(EVENTS.AGENT_TASK_COMPLETE, (data: { agentId: string; task: any; result: string }) => {
       const pal = AGENT_PALETTES.find(a => a.id === data.agentId);
       const name = this.agentNames.get(data.agentId) || pal?.name || data.agentId;
-      const cls = data.result === 'success' ? 'success' : 'error';
-      const msg = data.result === 'success' ? '✓ Completed' : '✗ Failed';
-      this.addLog(data.agentId, name, pal?.color || '#888', msg, '', cls);
+      const ok = data.result === 'success';
+      const desc = data.task?.description || 'task';
+      const msg = ok ? `✅ ${desc}` : `❌ Failed: ${desc}`;
+
+      this.addLog(
+        name, pal?.color || '#888',
+        msg, '',
+        ok ? 'success' : 'error'
+      );
+
       if (this.fpActive && this.fpAgentId === data.agentId) {
-        this.addFirstPersonFeed(msg, cls);
+        this.addFirstPersonFeed(ok ? `✅ ${desc}` : `❌ ${desc}`, ok ? 'success' : 'error');
       }
     });
 
     eventBus.on(EVENTS.WORLD_STATS_UPDATED, (s: WorldStats) => this.updateStats(s));
   }
 
-  private addLog(agentId: string, name: string, color: string, action: string, detail: string, type: string): void {
+  private addLog(name: string, color: string, action: string, detail: string, type: string): void {
     const entry = document.createElement('div');
     const cls = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'think' ? 'thinking' : type === 'deploy' ? 'deploy' : '';
     entry.className = `log-entry ${cls}`;
-    const el = Math.floor((Date.now() - this.startTime) / 1000);
-    const m = Math.floor(el / 60).toString().padStart(2, '0');
-    const s = (el % 60).toString().padStart(2, '0');
-    entry.innerHTML = `<span class="l-time">${m}:${s}</span><span class="l-agent" style="color:${color}">${this.escapeHtml(name)}</span><span class="l-action">${this.escapeHtml(action)}</span>${detail ? `<span class="l-detail">↳ ${this.escapeHtml(detail)}</span>` : ''}`;
+
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const s = now.getSeconds().toString().padStart(2, '0');
+
+    entry.innerHTML =
+      `<span class="l-time">${h}:${m}:${s}</span>` +
+      `<span class="l-agent" style="color:${color}">${this.escapeHtml(name)}</span>` +
+      `<span class="l-action">${this.escapeHtml(action)}</span>` +
+      (detail ? `<span class="l-detail">📍 ${this.escapeHtml(detail)}</span>` : '');
+
     this.logContainer.appendChild(entry);
     this.logCount++;
     this.logContainer.scrollTop = this.logContainer.scrollHeight;

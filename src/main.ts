@@ -20,6 +20,12 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     mouse: { preventDefaultWheel: true },
   },
+  fps: {
+    target: 60,
+    forceSetTimeOut: false,
+    smoothStep: false,
+  },
+  disableVisibilityChange: true,
 };
 
 const game = new Phaser.Game(config);

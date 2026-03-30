@@ -8,7 +8,7 @@ const T = CONFIG.TILE_SIZE;
 
 // State → emoji icon shown above agent
 const STATE_ICONS: Record<AgentState, string> = {
-  idle: '',
+  idle: '🃏',
   walking: '🚶',
   arriving: '🚶',
   working: '💻',
@@ -45,6 +45,9 @@ export class Agent {
   private workTimer = 0;
   private taskCallback: (() => void) | null = null;
   private bobOffset = 0;
+  private homeTile: TilePos | null = null;
+  private homePixel: { x: number; y: number } | null = null;
+  private returningHome = false;
   private blinkTimer = 0;
   private blinkDuration = 0;
   private nextBlink = 2000 + Math.random() * 3000;
@@ -87,11 +90,12 @@ export class Agent {
     this.drawStatusDot(0x40d880);
 
     // Name (clean, readable, bigger)
-    this.nameLabel = scene.add.text(0, 12, name, {
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '9px',
-      color: '#b0b0d0',
-      stroke: '#08080f',
+    this.nameLabel = scene.add.text(0, 14, name, {
+      fontFamily: "'JetBrains Mono', Arial, sans-serif",
+      fontSize: '8px',
+      fontStyle: 'bold',
+      color: colorHex,
+      stroke: '#06060c',
       strokeThickness: 3,
       align: 'center',
     }).setOrigin(0.5, 0).setResolution(2);
@@ -121,14 +125,22 @@ export class Agent {
 
   private drawBody(blink = false): void {
     this.body.clear();
-    // Shadow
-    this.body.fillStyle(0x000000, 0.25);
-    this.body.fillEllipse(0, 8, T * 0.7, T * 0.2);
+    // Dynamic shadow — bigger when working, smaller when walking
+    const s = this.fsm?.state || 'idle';
+    const shadowW = s === 'working' || s === 'thinking' ? T * 0.9 : T * 0.7;
+    const shadowA = s === 'walking' ? 0.18 : 0.3;
+    this.body.fillStyle(0x000000, shadowA);
+    this.body.fillEllipse(0, 10, shadowW, T * 0.22);
+    // Colored glow under agent
+    this.body.fillStyle(this.color, 0.06);
+    this.body.fillCircle(0, 10, T * 0.5);
     // Body
     this.body.fillStyle(this.darkColor, 1);
-    this.body.fillRoundedRect(-6, -2, 12, 12, 4);
+    this.body.fillRoundedRect(-7, -2, 14, 13, 4);
+    // Body shading (lighter top)
+    this.body.fillStyle(0xffffff, 0.06);
+    this.body.fillRoundedRect(-6, -1, 12, 5, 3);
     // Arms (small nubs on sides, animated during walk)
-    const s = this.fsm.state;
     if (s === 'walking') {
       const swing = Math.sin(this.animTimer / 80) * 2;
       this.body.fillStyle(this.darkColor, 1);
@@ -146,43 +158,62 @@ export class Agent {
     }
     // Head
     this.body.fillStyle(this.color, 1);
-    this.body.fillCircle(0, -5, 6);
-    // Highlight on head
-    this.body.fillStyle(0xffffff, 0.15);
-    this.body.fillCircle(-2, -7, 2.5);
+    this.body.fillCircle(0, -5, 7);
+    // Head shading — 3D effect
+    this.body.fillStyle(0xffffff, 0.12);
+    this.body.fillCircle(-1.5, -7.5, 4);
+    this.body.fillStyle(0x000000, 0.08);
+    this.body.fillCircle(1, -3, 4);
+    // Specular highlight
+    this.body.fillStyle(0xffffff, 0.25);
+    this.body.fillCircle(-2.5, -8, 1.5);
 
     if (blink) {
-      // Closed eyes — horizontal lines
-      this.body.lineStyle(1.2, 0x101020, 0.8);
-      this.body.lineBetween(-3.5, -5.5, -1, -5.5);
-      this.body.lineBetween(1.5, -5.5, 4, -5.5);
+      // Closed eyes — curved lines
+      this.body.lineStyle(1.5, 0x101020, 0.9);
+      this.body.lineBetween(-4, -5, -1, -5.5);
+      this.body.lineBetween(1, -5.5, 4, -5);
     } else {
-      // Open eyes — whites
+      // Open eyes — big, expressive
+      // Eye whites (larger)
       this.body.fillStyle(0xffffff, 0.95);
-      this.body.fillCircle(-2.5, -5.5, 2);
-      this.body.fillCircle(2.5, -5.5, 2);
-      // Pupils — follow direction/look
-      const px = this.eyeLookX * 0.8;
-      const py = this.eyeLookY * 0.5;
-      this.body.fillStyle(0x101020, 1);
-      this.body.fillCircle(-2 + px, -5.5 + py, 1);
-      this.body.fillCircle(3 + px, -5.5 + py, 1);
-      // Tiny white highlight in pupils
-      this.body.fillStyle(0xffffff, 0.5);
-      this.body.fillCircle(-2.3 + px, -6 + py, 0.4);
-      this.body.fillCircle(2.7 + px, -6 + py, 0.4);
+      this.body.fillEllipse(-2.5, -5, 5, 4.5);
+      this.body.fillEllipse(2.5, -5, 5, 4.5);
+      // Iris color (based on agent color, subtle)
+      const px = this.eyeLookX * 1;
+      const py = this.eyeLookY * 0.6;
+      this.body.fillStyle(this.color, 0.3);
+      this.body.fillCircle(-2.2 + px, -5 + py, 1.8);
+      this.body.fillCircle(2.8 + px, -5 + py, 1.8);
+      // Pupils
+      this.body.fillStyle(0x080810, 1);
+      this.body.fillCircle(-2.2 + px, -5 + py, 1.2);
+      this.body.fillCircle(2.8 + px, -5 + py, 1.2);
+      // Specular highlight in eyes
+      this.body.fillStyle(0xffffff, 0.8);
+      this.body.fillCircle(-2.8 + px * 0.3, -5.8 + py * 0.3, 0.6);
+      this.body.fillCircle(2.2 + px * 0.3, -5.8 + py * 0.3, 0.6);
     }
 
-    // Mouth — tiny expression
+    // Mouth
     if (s === 'error') {
-      // Frown
+      // Frown — curved down
       this.body.lineStyle(0.8, 0x101020, 0.5);
-      this.body.lineBetween(-1.5, -2.5, 1.5, -2.5);
-    } else if (s === 'done') {
-      // Smile
-      this.body.lineStyle(0.8, 0x101020, 0.4);
-      this.body.arc(0, -3.5, 2, 0.2, Math.PI - 0.2, false);
+      this.body.arc(0, -1.5, 2, Math.PI + 0.3, -0.3, false);
       this.body.strokePath();
+    } else if (s === 'done') {
+      // Big smile
+      this.body.lineStyle(0.8, 0x101020, 0.5);
+      this.body.arc(0, -3, 2.5, 0.2, Math.PI - 0.2, false);
+      this.body.strokePath();
+    } else if (s === 'working') {
+      // Focused — small flat line
+      this.body.fillStyle(0x101020, 0.3);
+      this.body.fillRect(-1, -2.2, 2, 0.8);
+    } else if (s === 'thinking') {
+      // O mouth
+      this.body.lineStyle(0.6, 0x101020, 0.3);
+      this.body.strokeCircle(0, -2, 1.2);
     }
   }
 
@@ -200,6 +231,11 @@ export class Agent {
     this.selRing.strokeEllipse(0, 8, T * 0.9, T * 0.3);
     this.selRing.lineStyle(4, this.color, 0.12);
     this.selRing.strokeEllipse(0, 8, T * 1, T * 0.35);
+  }
+
+  setHomeSeat(tile: TilePos, pixel: { x: number; y: number }): void {
+    this.homeTile = tile;
+    this.homePixel = pixel;
   }
 
   setSelected(sel: boolean): void {
@@ -289,6 +325,8 @@ export class Agent {
     switch (state) {
       case 'idle':
         this.drawStatusDot(0x40d880);
+        this.currentTask = null;
+        this.returnToSeat();
         break;
       case 'walking':
         this.drawStatusDot(0xffaa40);
@@ -333,9 +371,20 @@ export class Agent {
       case 'walking': this.moveAlongPath(delta); break;
       case 'arriving':
         if (this.fsm.timer > 300) {
-          const t = this.currentTask?.type;
-          this.fsm.transition(t === 'think' ? 'thinking' : 'working');
-          if (this.currentTask) this.workTimer = this.currentTask.duration;
+          if (!this.currentTask) {
+            // Returning to poker table — snap to seat and sit
+            if (this.homePixel) {
+              this.sprite.x = this.homePixel.x;
+              this.sprite.y = this.homePixel.y;
+              this.tileX = this.homeTile?.x ?? this.tileX;
+              this.tileY = this.homeTile?.y ?? this.tileY;
+            }
+            this.fsm.transition('idle');
+          } else {
+            const t = this.currentTask.type;
+            this.fsm.transition(t === 'think' ? 'thinking' : 'working');
+            this.workTimer = this.currentTask.duration;
+          }
         }
         break;
       case 'working':
@@ -347,6 +396,35 @@ export class Agent {
   }
 
   private onExit(): void { this.animTimer = 0; }
+
+  /** Walk back to poker table seat, or snap if close enough */
+  private returnToSeat(): void {
+    if (!this.homeTile || !this.homePixel || this.returningHome) return;
+
+    const distPx = Math.abs(this.sprite.x - this.homePixel.x) + Math.abs(this.sprite.y - this.homePixel.y);
+
+    if (distPx < T * 2) {
+      // Close — snap directly to pixel-perfect position
+      this.sprite.x = this.homePixel.x;
+      this.sprite.y = this.homePixel.y;
+      this.tileX = this.homeTile.x;
+      this.tileY = this.homeTile.y;
+      return;
+    }
+
+    // Far away — pathfind back
+    this.returningHome = true;
+    this.pathGrid.findPath(
+      { x: this.tileX, y: this.tileY },
+      this.homeTile
+    ).then(path => {
+      this.returningHome = false;
+      if (this.fsm.state !== 'idle' || path.length === 0) return;
+      this.currentPath = path;
+      this.pathIndex = 0;
+      this.fsm.transition('walking');
+    });
+  }
 
   private moveAlongPath(delta: number): void {
     if (this.pathIndex >= this.currentPath.length) {

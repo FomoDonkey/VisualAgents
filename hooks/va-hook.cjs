@@ -1,21 +1,7 @@
 #!/usr/bin/env node
 /**
  * VisualAgents Hook for Claude Code
- *
- * This script is called by Claude Code hooks (PreToolUse / PostToolUse).
- * It reads the event JSON from stdin, adds metadata, and appends to
- * a JSONL file that VisualAgents reads in real-time.
- *
- * Setup: Add to your .claude/settings.json (or project .claude/settings.json):
- *
- * {
- *   "hooks": {
- *     "PreToolUse": [{ "type": "command", "command": "node hooks/va-hook.js pre" }],
- *     "PostToolUse": [{ "type": "command", "command": "node hooks/va-hook.js post" }],
- *     "SubagentCreate": [{ "type": "command", "command": "node hooks/va-hook.js agent-start" }],
- *     "SubagentComplete": [{ "type": "command", "command": "node hooks/va-hook.js agent-end" }]
- *   }
- * }
+ * Captures tool events and writes to events.jsonl
  */
 
 const fs = require('fs');
@@ -32,31 +18,52 @@ process.stdin.on('end', () => {
     const data = input.trim() ? JSON.parse(input) : {};
     const event = {
       ts: Date.now(),
-      phase,               // "pre", "post", "agent-start", "agent-end"
+      phase,
       tool: data.tool_name || data.tool || '',
       input: summarizeInput(data),
-      result: data.result ? String(data.result).substring(0, 200) : '',
+      result: summarizeResult(data),
       agent_id: data.agent_id || data.session_id || 'main',
-      agent_name: data.agent_name || '',
+      agent_name: data.agent_name || data.name || 'Claude',
       raw_type: data.type || '',
     };
     fs.appendFileSync(EVENTS_FILE, JSON.stringify(event) + '\n');
   } catch (e) {
     // Silently ignore errors — don't break Claude Code
   }
-  // Always exit cleanly so we don't block Claude Code
   process.exit(0);
 });
+
+function shortPath(p) {
+  if (!p) return '';
+  const parts = p.replace(/\\/g, '/').split('/');
+  if (parts.length <= 2) return parts.join('/');
+  return parts.slice(-2).join('/');
+}
 
 function summarizeInput(data) {
   if (!data.tool_input && !data.input) return '';
   const inp = data.tool_input || data.input || {};
-  if (typeof inp === 'string') return inp.substring(0, 200);
-  // Summarize common tool inputs
-  if (inp.file_path) return inp.file_path;
-  if (inp.command) return inp.command.substring(0, 150);
-  if (inp.pattern) return `grep: ${inp.pattern}`;
-  if (inp.query) return inp.query.substring(0, 150);
-  if (inp.prompt) return inp.prompt.substring(0, 150);
-  return JSON.stringify(inp).substring(0, 200);
+  if (typeof inp === 'string') return shortPath(inp.substring(0, 200));
+  if (inp.file_path) return shortPath(inp.file_path);
+  if (inp.command) {
+    const cmd = inp.command.replace(/\s+2>&1$/, '').trim();
+    return cmd.substring(0, 120);
+  }
+  if (inp.pattern) return inp.pattern.substring(0, 80);
+  if (inp.query) return inp.query.substring(0, 80);
+  if (inp.prompt) return inp.prompt.substring(0, 80);
+  if (inp.description) return inp.description.substring(0, 80);
+  if (inp.subject) return inp.subject.substring(0, 80);
+  if (inp.skill) return inp.skill;
+  if (inp.old_string) return shortPath(inp.file_path || '') + ' (replace)';
+  return JSON.stringify(inp).substring(0, 120);
+}
+
+function summarizeResult(data) {
+  const r = data.tool_result || data.result || '';
+  if (!r) return '';
+  const s = String(r);
+  if (s.toLowerCase().includes('error')) return 'error';
+  if (s.toLowerCase().includes('failed')) return 'failed';
+  return s.substring(0, 100);
 }

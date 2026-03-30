@@ -157,7 +157,6 @@ export class AmbientAnimations {
   update(delta: number): void {
     this.timer += delta;
     const t = this.timer / 1000;
-
     this.updateMonitors(t);
     this.updateLeds(t);
     this.updatePlants(t);

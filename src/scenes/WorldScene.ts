@@ -8,6 +8,8 @@ import { CameraController } from '../ui/CameraController';
 import { ParticleManager } from '../effects/ParticleManager';
 import { DayNightCycle } from '../effects/DayNightCycle';
 import { AmbientAnimations } from '../effects/AmbientAnimations';
+import { NeonOverlay } from '../effects/NeonOverlay';
+import { CinematicEffects } from '../effects/CinematicEffects';
 import { eventBus } from '../simulation/EventBus';
 import { EVENTS } from '../types/events';
 import { HtmlUI } from '../ui/HtmlUI';
@@ -26,6 +28,8 @@ export class WorldScene extends Phaser.Scene {
   private particles!: ParticleManager;
   private dayNight!: DayNightCycle;
   private ambient!: AmbientAnimations;
+  private neon!: NeonOverlay;
+  private cinematic!: CinematicEffects;
   private htmlUI!: HtmlUI;
   private uiTimer = 0;
   private thinkTimer = 0;
@@ -41,6 +45,7 @@ export class WorldScene extends Phaser.Scene {
     this.pathGrid = new PathGrid();
     this.agentManager = new AgentManager(this, this.pathGrid);
     this.cameraController = new CameraController(this);
+    this.cameraController.setAgentManager(this.agentManager);
 
     this.realtime = new RealtimeEngine(this.agentManager);
 
@@ -48,14 +53,21 @@ export class WorldScene extends Phaser.Scene {
     this.dayNight = new DayNightCycle(this);
     this.ambient = new AmbientAnimations(this);
     this.ambient.setAgentManager(this.agentManager);
+    this.neon = new NeonOverlay(this);
+    this.cinematic = new CinematicEffects(this);
+    this.cinematic.setAgentManager(this.agentManager);
 
     this.setupEvents();
     this.connectUI();
 
+    // Camera starts centered on poker table
+    this.cameras.main.centerOn(21 * CONFIG.TILE_SIZE, 14 * CONFIG.TILE_SIZE);
+
     this.htmlUI.setMode('live');
   }
 
-  update(_t: number, delta: number): void {
+  update(_t: number, rawDelta: number): void {
+    const delta = Math.min(rawDelta, 50);
     this.cameraController.update(delta);
     this.agentManager.update(delta);
     this.particles.update(delta);
@@ -64,6 +76,8 @@ export class WorldScene extends Phaser.Scene {
 
     this.realtime.update(delta);
     this.ambient.update(delta);
+    this.neon.update(delta);
+    this.cinematic.update(delta);
 
     // Work particles — themed by task type
     this.thinkTimer += delta;
@@ -79,12 +93,15 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Walk dust every 150ms for walking agents
-    if (this.walkDustTimer > 150) {
+    // Walk dust + trail every 100ms for walking agents
+    if (this.walkDustTimer > 100) {
       this.walkDustTimer = 0;
       for (const a of this.agentManager.getAllAgents()) {
         if (a.fsm.state === 'walking') {
           this.particles.emitWalkDust(a.sprite.x, a.sprite.y);
+          // Glowing trail behind agent
+          const pal = { blue: 0x4a8aff, red: 0xff5a6a, green: 0x40cc70, purple: 0xaa6aef, orange: 0xffa040 };
+          this.particles.addTrailPoint(a.sprite.x, a.sprite.y + 6, (pal as any)[a.id] || 0x4a8aff);
         }
       }
     }
@@ -177,13 +194,40 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private setupEvents(): void {
+    // Task assigned — floating text label + activation flash
+    eventBus.on(EVENTS.AGENT_TASK_ASSIGNED, (d: { agentId: string; task: any }) => {
+      const a = this.agentManager.getAgent(d.agentId);
+      if (!a) return;
+      // Floating label showing what the agent is doing
+      const label = this.add.text(a.sprite.x, a.sprite.y - 20, d.task.description, {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '8px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3,
+        align: 'center',
+      }).setOrigin(0.5, 1).setDepth(2000).setAlpha(1);
+      // Animate: float up and fade
+      this.tweens.add({
+        targets: label,
+        y: label.y - 24,
+        alpha: 0,
+        duration: 1800,
+        ease: 'Cubic.easeOut',
+        onComplete: () => label.destroy(),
+      });
+    });
+
+    // Task complete — big particle burst
     eventBus.on(EVENTS.AGENT_TASK_COMPLETE, (d: { agentId: string; result: string }) => {
       const a = this.agentManager.getAgent(d.agentId);
       if (!a) return;
-      d.result === 'success'
-        ? this.particles.emitSuccess(a.sprite.x, a.sprite.y)
-        : this.particles.emitError(a.sprite.x, a.sprite.y);
-      if (d.result !== 'success') this.cameras.main.shake(150, 0.002);
+      if (d.result === 'success') {
+        this.particles.emitSuccess(a.sprite.x, a.sprite.y);
+      } else {
+        this.particles.emitError(a.sprite.x, a.sprite.y);
+        this.cameras.main.shake(150, 0.002);
+      }
     });
   }
 }

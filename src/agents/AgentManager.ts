@@ -2,7 +2,19 @@ import Phaser from 'phaser';
 import { Agent } from './Agent';
 import { PathGrid } from '../world/PathGrid';
 import { AGENT_PALETTES, CONFIG } from '../config';
-import { BUILDINGS } from '../world/BuildingRegistry';
+
+const T = CONFIG.TILE_SIZE;
+
+// Poker seats — pixel positions around the table (center ~509, 331)
+// These are the EXACT pixel coords where agents sit, plus the nearest
+// walkable tile for pathfinding purposes.
+const POKER_SEATS = [
+  { px: 480, py: 300, tx: 20, ty: 12 },  // top-left
+  { px: 540, py: 300, tx: 22, ty: 12 },  // top-right
+  { px: 558, py: 336, tx: 23, ty: 13 },  // right
+  { px: 540, py: 372, tx: 22, ty: 15 },  // bottom-right
+  { px: 480, py: 372, tx: 20, ty: 15 },  // bottom-left
+];
 
 export class AgentManager {
   private scene: Phaser.Scene;
@@ -12,23 +24,20 @@ export class AgentManager {
   constructor(scene: Phaser.Scene, pathGrid: PathGrid) {
     this.scene = scene;
 
-    const spawns = [
-      BUILDINGS[0].entranceTile,
-      BUILDINGS[1].entranceTile,
-      BUILDINGS[3].entranceTile,
-      BUILDINGS[4].entranceTile,
-      BUILDINGS[5].entranceTile,
-    ];
-
     for (let i = 0; i < CONFIG.NUM_AGENTS; i++) {
       const p = AGENT_PALETTES[i];
-      const sp = spawns[i % spawns.length];
+      const seat = POKER_SEATS[i % POKER_SEATS.length];
+
       const agent = new Agent(
         scene, p.id, p.name,
         p.color, p.dark,
-        { x: sp.x + (i % 2), y: sp.y + 1 },
+        { x: seat.tx, y: seat.ty },
         pathGrid
       );
+      agent.setHomeSeat({ x: seat.tx, y: seat.ty }, { x: seat.px, y: seat.py });
+      // Place sprite at exact pixel position
+      agent.sprite.x = seat.px;
+      agent.sprite.y = seat.py;
       this.agents.set(p.id, agent);
     }
   }

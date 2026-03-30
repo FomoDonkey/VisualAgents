@@ -37,7 +37,11 @@
       "Read(//c/Users/edgar/Desktop/proyectos/VisualAgents/extension/$USERPROFILE/.vscode/extensions/visualagents.visualagents-0.2.0/**)",
       "WebFetch(domain:www.eclipse.org)",
       "Bash(gh auth:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh issue:*)",
+      "Bash(git push:*)"
     ]
   },
   "hooks": {

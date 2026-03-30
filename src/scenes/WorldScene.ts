@@ -7,6 +7,7 @@ import { RealtimeEngine } from '../realtime/RealtimeEngine';
 import { CameraController } from '../ui/CameraController';
 import { ParticleManager } from '../effects/ParticleManager';
 import { DayNightCycle } from '../effects/DayNightCycle';
+import { AmbientAnimations } from '../effects/AmbientAnimations';
 import { eventBus } from '../simulation/EventBus';
 import { EVENTS } from '../types/events';
 import { HtmlUI } from '../ui/HtmlUI';
@@ -24,9 +25,12 @@ export class WorldScene extends Phaser.Scene {
   private realtime!: RealtimeEngine;
   private particles!: ParticleManager;
   private dayNight!: DayNightCycle;
+  private ambient!: AmbientAnimations;
   private htmlUI!: HtmlUI;
   private uiTimer = 0;
   private thinkTimer = 0;
+  private walkDustTimer = 0;
+  private workParticleTimer = 0;
 
   constructor() { super({ key: 'WorldScene' }); }
 
@@ -42,6 +46,8 @@ export class WorldScene extends Phaser.Scene {
 
     this.particles = new ParticleManager(this);
     this.dayNight = new DayNightCycle(this);
+    this.ambient = new AmbientAnimations(this);
+    this.ambient.setAgentManager(this.agentManager);
 
     this.setupEvents();
     this.connectUI();
@@ -57,9 +63,13 @@ export class WorldScene extends Phaser.Scene {
     this.pathGrid.update();
 
     this.realtime.update(delta);
+    this.ambient.update(delta);
 
-    // Think particles
+    // Work particles — themed by task type
     this.thinkTimer += delta;
+    this.walkDustTimer += delta;
+    this.workParticleTimer += delta;
+
     if (this.thinkTimer > 400) {
       this.thinkTimer = 0;
       for (const a of this.agentManager.getAllAgents()) {
@@ -68,6 +78,32 @@ export class WorldScene extends Phaser.Scene {
         }
       }
     }
+
+    // Walk dust every 150ms for walking agents
+    if (this.walkDustTimer > 150) {
+      this.walkDustTimer = 0;
+      for (const a of this.agentManager.getAllAgents()) {
+        if (a.fsm.state === 'walking') {
+          this.particles.emitWalkDust(a.sprite.x, a.sprite.y);
+        }
+      }
+    }
+
+    // Work-specific particles every 500ms
+    if (this.workParticleTimer > 500) {
+      this.workParticleTimer = 0;
+      for (const a of this.agentManager.getAllAgents()) {
+        if (a.fsm.state !== 'working' || !a.currentTask) continue;
+        const t = a.currentTask.type;
+        if (t === 'write') this.particles.emitCoding(a.sprite.x, a.sprite.y);
+        else if (t === 'search' || t === 'read') this.particles.emitSearch(a.sprite.x, a.sprite.y);
+        else if (t === 'deploy') this.particles.emitDeploy(a.sprite.x, a.sprite.y);
+        else if (t === 'bash') this.particles.emitTerminal(a.sprite.x, a.sprite.y);
+      }
+    }
+
+    // Ambient dust
+    this.particles.emitAmbientDust(CONFIG.WORLD_WIDTH * CONFIG.TILE_SIZE, CONFIG.WORLD_HEIGHT * CONFIG.TILE_SIZE);
 
     // HTML UI sync
     this.uiTimer += delta;

@@ -45,6 +45,12 @@ export class Agent {
   private workTimer = 0;
   private taskCallback: (() => void) | null = null;
   private bobOffset = 0;
+  private blinkTimer = 0;
+  private blinkDuration = 0;
+  private nextBlink = 2000 + Math.random() * 3000;
+  private eyeLookX = 0;
+  private eyeLookY = 0;
+  private lookTimer = 0;
 
   constructor(
     scene: Phaser.Scene, id: string, name: string,
@@ -113,7 +119,7 @@ export class Agent {
     });
   }
 
-  private drawBody(): void {
+  private drawBody(blink = false): void {
     this.body.clear();
     // Shadow
     this.body.fillStyle(0x000000, 0.25);
@@ -121,19 +127,63 @@ export class Agent {
     // Body
     this.body.fillStyle(this.darkColor, 1);
     this.body.fillRoundedRect(-6, -2, 12, 12, 4);
+    // Arms (small nubs on sides, animated during walk)
+    const s = this.fsm.state;
+    if (s === 'walking') {
+      const swing = Math.sin(this.animTimer / 80) * 2;
+      this.body.fillStyle(this.darkColor, 1);
+      this.body.fillCircle(-7, 3 + swing, 2);
+      this.body.fillCircle(7, 3 - swing, 2);
+      // Legs
+      this.body.fillStyle(this.darkColor, 0.9);
+      this.body.fillRoundedRect(-4, 9 + swing * 0.5, 3, 4, 1);
+      this.body.fillRoundedRect(1, 9 - swing * 0.5, 3, 4, 1);
+    } else {
+      // Static arms
+      this.body.fillStyle(this.darkColor, 1);
+      this.body.fillCircle(-7, 3, 2);
+      this.body.fillCircle(7, 3, 2);
+    }
     // Head
     this.body.fillStyle(this.color, 1);
     this.body.fillCircle(0, -5, 6);
     // Highlight on head
     this.body.fillStyle(0xffffff, 0.15);
     this.body.fillCircle(-2, -7, 2.5);
-    // Eyes
-    this.body.fillStyle(0xffffff, 0.95);
-    this.body.fillCircle(-2.5, -5.5, 2);
-    this.body.fillCircle(2.5, -5.5, 2);
-    this.body.fillStyle(0x101020, 1);
-    this.body.fillCircle(-2, -5.5, 1);
-    this.body.fillCircle(3, -5.5, 1);
+
+    if (blink) {
+      // Closed eyes — horizontal lines
+      this.body.lineStyle(1.2, 0x101020, 0.8);
+      this.body.lineBetween(-3.5, -5.5, -1, -5.5);
+      this.body.lineBetween(1.5, -5.5, 4, -5.5);
+    } else {
+      // Open eyes — whites
+      this.body.fillStyle(0xffffff, 0.95);
+      this.body.fillCircle(-2.5, -5.5, 2);
+      this.body.fillCircle(2.5, -5.5, 2);
+      // Pupils — follow direction/look
+      const px = this.eyeLookX * 0.8;
+      const py = this.eyeLookY * 0.5;
+      this.body.fillStyle(0x101020, 1);
+      this.body.fillCircle(-2 + px, -5.5 + py, 1);
+      this.body.fillCircle(3 + px, -5.5 + py, 1);
+      // Tiny white highlight in pupils
+      this.body.fillStyle(0xffffff, 0.5);
+      this.body.fillCircle(-2.3 + px, -6 + py, 0.4);
+      this.body.fillCircle(2.7 + px, -6 + py, 0.4);
+    }
+
+    // Mouth — tiny expression
+    if (s === 'error') {
+      // Frown
+      this.body.lineStyle(0.8, 0x101020, 0.5);
+      this.body.lineBetween(-1.5, -2.5, 1.5, -2.5);
+    } else if (s === 'done') {
+      // Smile
+      this.body.lineStyle(0.8, 0x101020, 0.4);
+      this.body.arc(0, -3.5, 2, 0.2, Math.PI - 0.2, false);
+      this.body.strokePath();
+    }
   }
 
   private drawStatusDot(color: number): void {
@@ -192,6 +242,44 @@ export class Agent {
     } else {
       this.body.y = 0;
     }
+
+    // Blinking
+    this.blinkTimer += delta;
+    let isBlinking = false;
+    if (this.blinkDuration > 0) {
+      this.blinkDuration -= delta;
+      isBlinking = true;
+    } else if (this.blinkTimer >= this.nextBlink) {
+      this.blinkTimer = 0;
+      this.blinkDuration = 100 + Math.random() * 60;
+      this.nextBlink = 2000 + Math.random() * 4000;
+      isBlinking = true;
+    }
+
+    // Eye direction
+    this.lookTimer += delta;
+    if (s === 'walking') {
+      // Eyes look in walk direction
+      this.eyeLookX = this.direction === 'right' ? 1 : this.direction === 'left' ? -1 : 0;
+      this.eyeLookY = this.direction === 'down' ? 0.5 : this.direction === 'up' ? -0.5 : 0;
+    } else if (s === 'working' || s === 'thinking') {
+      // Eyes look down at desk/work
+      this.eyeLookX = Math.sin(this.lookTimer / 2000) * 0.5;
+      this.eyeLookY = 0.4;
+    } else if (s === 'idle') {
+      // Occasionally look around
+      if (this.lookTimer > 3000) {
+        this.lookTimer = 0;
+        this.eyeLookX = (Math.random() - 0.5) * 2;
+        this.eyeLookY = (Math.random() - 0.5) * 1;
+      }
+    } else {
+      this.eyeLookX = 0;
+      this.eyeLookY = 0;
+    }
+
+    // Redraw body with current blink/eye state
+    this.drawBody(isBlinking);
   }
 
   // === STATE CALLBACKS ===

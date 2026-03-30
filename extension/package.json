@@ -2,7 +2,7 @@
   "name": "visualagents",
   "displayName": "Visual Code Agents",
   "description": "Watch your Claude Code agents work in a pixel-art office. Connect any Claude Code session and see your agents move, code, search, and deploy in real time.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "visualagents",
   "license": "MIT",
   "repository": {

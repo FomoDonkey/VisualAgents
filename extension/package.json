@@ -1,0 +1,61 @@
+{
+  "name": "visualagents",
+  "displayName": "Visual Code Agents",
+  "description": "Watch your Claude Code agents work in a pixel-art office. Connect any Claude Code session and see your agents move, code, search, and deploy in real time.",
+  "version": "0.2.1",
+  "publisher": "visualagents",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FomoDonkey/VisualAgents"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Visualization", "Other"],
+  "keywords": ["claude", "claude-code", "agents", "visualization", "pixel-art", "antigravity", "ai-agents", "live", "office"],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "visualagents.open",
+        "title": "VisualAgents: Open Agent Visualizer",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "visualagents.connectClaudeCode",
+        "title": "VisualAgents: Connect Claude Code (Setup Hooks)"
+      },
+      {
+        "command": "visualagents.setEventsPath",
+        "title": "VisualAgents: Set Events File Path"
+      }
+    ],
+    "configuration": {
+      "title": "VisualAgents",
+      "properties": {
+        "visualagents.eventsFile": {
+          "type": "string",
+          "default": "",
+          "description": "Path to events.jsonl file. Leave empty to auto-detect from workspace root."
+        },
+        "visualagents.autoOpen": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open VisualAgents panel when events are detected."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}

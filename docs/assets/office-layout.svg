@@ -1,0 +1,238 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0f23"/>
+      <stop offset="100%" style="stop-color:#1a1a3e"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-sm">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e1e4a" stroke-width="0.3"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="450" fill="url(#bg)" rx="8"/>
+  <rect width="900" height="450" fill="url(#grid)" opacity="0.2" rx="8"/>
+
+  <!-- Title -->
+  <text x="450" y="35" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="20" font-weight="700" fill="#e2e8f0" letter-spacing="1">Office Layout</text>
+  <line x1="355" y1="44" x2="545" y2="44" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+
+  <!-- ═══════ TOP ROW ═══════ -->
+
+  <!-- Meeting Room -->
+  <g>
+    <rect x="40" y="65" width="250" height="145" rx="6" fill="#1a1520" stroke="#f59e0b" stroke-width="2" opacity="0.9"/>
+    <rect x="40" y="65" width="250" height="145" rx="6" fill="#f59e0b" opacity="0.03"/>
+    <!-- Neon glow corners -->
+    <circle cx="44" cy="69" r="3" fill="#f59e0b" opacity="0.5"/>
+    <circle cx="286" cy="69" r="3" fill="#f59e0b" opacity="0.5"/>
+    <circle cx="44" cy="206" r="3" fill="#f59e0b" opacity="0.5"/>
+    <circle cx="286" cy="206" r="3" fill="#f59e0b" opacity="0.5"/>
+    <!-- Room name -->
+    <text x="165" y="92" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="700" fill="#fbbf24" filter="url(#glow-sm)">Meeting Room</text>
+    <!-- Whiteboard -->
+    <rect x="60" y="105" width="50" height="30" rx="2" fill="#f8fafc" opacity="0.1" stroke="#fbbf24" stroke-width="0.5"/>
+    <line x1="66" y1="112" x2="100" y2="112" stroke="#fbbf24" stroke-width="0.5" opacity="0.3"/>
+    <line x1="66" y1="118" x2="90" y2="118" stroke="#22c55e" stroke-width="0.5" opacity="0.3"/>
+    <line x1="66" y1="124" x2="95" y2="124" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
+    <!-- Tools -->
+    <rect x="55" y="155" width="55" height="20" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="0.8"/>
+    <text x="82" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#fbbf24">Agent</text>
+    <rect x="120" y="155" width="45" height="20" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="0.8"/>
+    <text x="142" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#fbbf24">Plan</text>
+    <rect x="175" y="155" width="95" height="20" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="0.8"/>
+    <text x="222" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#fbbf24">AskQuestion</text>
+    <!-- Effect label -->
+    <text x="165" y="198" text-anchor="middle" font-family="monospace" font-size="8" fill="#92400e" opacity="0.8">warm light  whiteboard</text>
+  </g>
+
+  <!-- Research Corner -->
+  <g>
+    <rect x="325" y="65" width="250" height="145" rx="6" fill="#1a1520" stroke="#22c55e" stroke-width="2" opacity="0.9"/>
+    <rect x="325" y="65" width="250" height="145" rx="6" fill="#22c55e" opacity="0.03"/>
+    <circle cx="329" cy="69" r="3" fill="#22c55e" opacity="0.5"/>
+    <circle cx="571" cy="69" r="3" fill="#22c55e" opacity="0.5"/>
+    <circle cx="329" cy="206" r="3" fill="#22c55e" opacity="0.5"/>
+    <circle cx="571" cy="206" r="3" fill="#22c55e" opacity="0.5"/>
+    <text x="450" y="92" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="700" fill="#4ade80" filter="url(#glow-sm)">Research Corner</text>
+    <!-- Bookshelves -->
+    <rect x="345" y="105" width="40" height="35" rx="2" fill="#1e293b" stroke="#22c55e" stroke-width="0.5"/>
+    <rect x="348" y="108" width="12" height="8" fill="#22c55e" opacity="0.15"/>
+    <rect x="362" y="108" width="8" height="8" fill="#3b82f6" opacity="0.15"/>
+    <rect x="348" y="118" width="10" height="8" fill="#f59e0b" opacity="0.15"/>
+    <rect x="360" y="118" width="14" height="8" fill="#8b5cf6" opacity="0.15"/>
+    <rect x="348" y="128" width="8" height="8" fill="#ef4444" opacity="0.15"/>
+    <rect x="358" y="128" width="12" height="8" fill="#22c55e" opacity="0.15"/>
+    <!-- Floating orbs -->
+    <circle cx="430" cy="120" r="4" fill="#22c55e" opacity="0.15"/>
+    <circle cx="480" cy="110" r="3" fill="#22c55e" opacity="0.2"/>
+    <circle cx="510" cy="130" r="5" fill="#22c55e" opacity="0.1"/>
+    <circle cx="460" cy="140" r="3" fill="#22c55e" opacity="0.15"/>
+    <!-- Tools -->
+    <rect x="345" y="155" width="50" height="20" rx="10" fill="#1e293b" stroke="#4ade80" stroke-width="0.8"/>
+    <text x="370" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#4ade80">Grep</text>
+    <rect x="405" y="155" width="80" height="20" rx="10" fill="#1e293b" stroke="#4ade80" stroke-width="0.8"/>
+    <text x="445" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#4ade80">WebSearch</text>
+    <rect x="495" y="155" width="70" height="20" rx="10" fill="#1e293b" stroke="#4ade80" stroke-width="0.8"/>
+    <text x="530" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#4ade80">WebFetch</text>
+    <text x="450" y="198" text-anchor="middle" font-family="monospace" font-size="8" fill="#166534" opacity="0.8">floating green orbs</text>
+  </g>
+
+  <!-- Archive Room -->
+  <g>
+    <rect x="610" y="65" width="250" height="145" rx="6" fill="#1a1520" stroke="#a78bfa" stroke-width="2" opacity="0.9"/>
+    <rect x="610" y="65" width="250" height="145" rx="6" fill="#a78bfa" opacity="0.03"/>
+    <circle cx="614" cy="69" r="3" fill="#a78bfa" opacity="0.5"/>
+    <circle cx="856" cy="69" r="3" fill="#a78bfa" opacity="0.5"/>
+    <circle cx="614" cy="206" r="3" fill="#a78bfa" opacity="0.5"/>
+    <circle cx="856" cy="206" r="3" fill="#a78bfa" opacity="0.5"/>
+    <text x="735" y="92" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="700" fill="#c4b5fd" filter="url(#glow-sm)">Archive Room</text>
+    <!-- Filing cabinets -->
+    <rect x="630" y="105" width="22" height="35" rx="2" fill="#374151" stroke="#a78bfa" stroke-width="0.5"/>
+    <rect x="634" y="108" width="14" height="6" rx="1" fill="#1e293b"/>
+    <rect x="634" y="117" width="14" height="6" rx="1" fill="#1e293b"/>
+    <rect x="634" y="126" width="14" height="6" rx="1" fill="#1e293b"/>
+    <circle cx="641" cy="111" r="1" fill="#a78bfa" opacity="0.5"/>
+    <circle cx="641" cy="120" r="1" fill="#a78bfa" opacity="0.5"/>
+    <circle cx="641" cy="129" r="1" fill="#a78bfa" opacity="0.5"/>
+    <!-- Dust motes -->
+    <circle cx="720" cy="115" r="1.5" fill="#a78bfa" opacity="0.15"/>
+    <circle cx="760" cy="125" r="1" fill="#d4c0a0" opacity="0.2"/>
+    <circle cx="800" cy="108" r="1.5" fill="#d4c0a0" opacity="0.15"/>
+    <circle cx="840" cy="130" r="1" fill="#a78bfa" opacity="0.1"/>
+    <circle cx="700" cy="135" r="1" fill="#d4c0a0" opacity="0.15"/>
+    <!-- Tools -->
+    <rect x="670" y="155" width="55" height="20" rx="10" fill="#1e293b" stroke="#c4b5fd" stroke-width="0.8"/>
+    <text x="697" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#c4b5fd">Read</text>
+    <rect x="735" y="155" width="55" height="20" rx="10" fill="#1e293b" stroke="#c4b5fd" stroke-width="0.8"/>
+    <text x="762" y="169" text-anchor="middle" font-family="monospace" font-size="9" fill="#c4b5fd">Glob</text>
+    <text x="735" y="198" text-anchor="middle" font-family="monospace" font-size="8" fill="#6d28d9" opacity="0.8">dust motes  bookshelves</text>
+  </g>
+
+  <!-- ═══════ CORRIDOR ═══════ -->
+  <rect x="40" y="215" width="820" height="30" rx="2" fill="#111827" opacity="0.6"/>
+  <line x1="450" y1="220" x2="450" y2="240" stroke="#334155" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+  <!-- Corridor LEDs -->
+  <rect x="100" y="228" width="8" height="3" rx="1" fill="#00d4ff" opacity="0.15"/>
+  <rect x="250" y="228" width="8" height="3" rx="1" fill="#00d4ff" opacity="0.15"/>
+  <rect x="400" y="228" width="8" height="3" rx="1" fill="#00d4ff" opacity="0.15"/>
+  <rect x="550" y="228" width="8" height="3" rx="1" fill="#00d4ff" opacity="0.15"/>
+  <rect x="700" y="228" width="8" height="3" rx="1" fill="#00d4ff" opacity="0.15"/>
+
+  <!-- ═══════ BOTTOM ROW ═══════ -->
+
+  <!-- Dev Floor -->
+  <g>
+    <rect x="40" y="250" width="250" height="145" rx="6" fill="#1a1520" stroke="#3b82f6" stroke-width="2" opacity="0.9"/>
+    <rect x="40" y="250" width="250" height="145" rx="6" fill="#3b82f6" opacity="0.03"/>
+    <circle cx="44" cy="254" r="3" fill="#3b82f6" opacity="0.5"/>
+    <circle cx="286" cy="254" r="3" fill="#3b82f6" opacity="0.5"/>
+    <circle cx="44" cy="391" r="3" fill="#3b82f6" opacity="0.5"/>
+    <circle cx="286" cy="391" r="3" fill="#3b82f6" opacity="0.5"/>
+    <text x="165" y="278" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="700" fill="#60a5fa" filter="url(#glow-sm)">Dev Floor</text>
+    <!-- Desks grid -->
+    <g opacity="0.4">
+      <rect x="60" y="290" width="28" height="18" rx="2" fill="#374151" stroke="#3b82f6" stroke-width="0.5"/>
+      <rect x="66" y="286" width="16" height="10" rx="1" fill="#1e293b" stroke="#3b82f6" stroke-width="0.3"/>
+      <rect x="100" y="290" width="28" height="18" rx="2" fill="#374151" stroke="#3b82f6" stroke-width="0.5"/>
+      <rect x="106" y="286" width="16" height="10" rx="1" fill="#1e293b" stroke="#3b82f6" stroke-width="0.3"/>
+      <rect x="140" y="290" width="28" height="18" rx="2" fill="#374151" stroke="#3b82f6" stroke-width="0.5"/>
+      <rect x="146" y="286" width="16" height="10" rx="1" fill="#1e293b" stroke="#3b82f6" stroke-width="0.3"/>
+      <rect x="60" y="318" width="28" height="18" rx="2" fill="#374151" stroke="#3b82f6" stroke-width="0.5"/>
+      <rect x="100" y="318" width="28" height="18" rx="2" fill="#374151" stroke="#3b82f6" stroke-width="0.5"/>
+      <rect x="140" y="318" width="28" height="18" rx="2" fill="#374151" stroke="#3b82f6" stroke-width="0.5"/>
+    </g>
+    <!-- Blue particles -->
+    <circle cx="210" cy="300" r="3" fill="#3b82f6" opacity="0.12"/>
+    <circle cx="230" cy="320" r="2" fill="#3b82f6" opacity="0.15"/>
+    <circle cx="250" cy="290" r="2" fill="#3b82f6" opacity="0.1"/>
+    <!-- Tools -->
+    <rect x="70" y="350" width="55" height="20" rx="10" fill="#1e293b" stroke="#60a5fa" stroke-width="0.8"/>
+    <text x="97" y="364" text-anchor="middle" font-family="monospace" font-size="9" fill="#60a5fa">Write</text>
+    <rect x="135" y="350" width="50" height="20" rx="10" fill="#1e293b" stroke="#60a5fa" stroke-width="0.8"/>
+    <text x="160" y="364" text-anchor="middle" font-family="monospace" font-size="9" fill="#60a5fa">Edit</text>
+    <text x="165" y="385" text-anchor="middle" font-family="monospace" font-size="8" fill="#1d4ed8" opacity="0.8">blue particles  9 desks</text>
+  </g>
+
+  <!-- Server Room -->
+  <g>
+    <rect x="325" y="250" width="250" height="145" rx="6" fill="#1a1520" stroke="#ef4444" stroke-width="2" opacity="0.9"/>
+    <rect x="325" y="250" width="250" height="145" rx="6" fill="#ef4444" opacity="0.03"/>
+    <circle cx="329" cy="254" r="3" fill="#ef4444" opacity="0.5"/>
+    <circle cx="571" cy="254" r="3" fill="#ef4444" opacity="0.5"/>
+    <circle cx="329" cy="391" r="3" fill="#ef4444" opacity="0.5"/>
+    <circle cx="571" cy="391" r="3" fill="#ef4444" opacity="0.5"/>
+    <text x="450" y="278" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="700" fill="#f87171" filter="url(#glow-sm)">Server Room</text>
+    <!-- Server racks -->
+    <g opacity="0.5">
+      <rect x="355" y="290" width="20" height="45" rx="2" fill="#1e293b" stroke="#ef4444" stroke-width="0.5"/>
+      <rect x="358" y="293" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.8"/>
+      <rect x="358" y="299" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.6"/>
+      <rect x="358" y="305" width="4" height="3" rx="0.5" fill="#ef4444" opacity="0.8"/>
+      <rect x="358" y="311" width="4" height="3" rx="0.5" fill="#f59e0b" opacity="0.6"/>
+      <rect x="358" y="317" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.7"/>
+      <rect x="358" y="323" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.5"/>
+      <rect x="385" y="290" width="20" height="45" rx="2" fill="#1e293b" stroke="#ef4444" stroke-width="0.5"/>
+      <rect x="388" y="293" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.7"/>
+      <rect x="388" y="299" width="4" height="3" rx="0.5" fill="#f59e0b" opacity="0.6"/>
+      <rect x="388" y="305" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.8"/>
+      <rect x="388" y="311" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.5"/>
+      <rect x="388" y="317" width="4" height="3" rx="0.5" fill="#ef4444" opacity="0.6"/>
+      <rect x="388" y="323" width="4" height="3" rx="0.5" fill="#22c55e" opacity="0.8"/>
+    </g>
+    <!-- Sparks -->
+    <circle cx="480" cy="295" r="1.5" fill="#f59e0b" opacity="0.3"/>
+    <circle cx="500" cy="310" r="1" fill="#f59e0b" opacity="0.25"/>
+    <circle cx="520" cy="300" r="2" fill="#ef4444" opacity="0.2"/>
+    <circle cx="540" cy="325" r="1" fill="#f59e0b" opacity="0.3"/>
+    <!-- Tools -->
+    <rect x="415" y="350" width="55" height="20" rx="10" fill="#1e293b" stroke="#f87171" stroke-width="0.8"/>
+    <text x="442" y="364" text-anchor="middle" font-family="monospace" font-size="9" fill="#f87171">Bash</text>
+    <text x="450" y="385" text-anchor="middle" font-family="monospace" font-size="8" fill="#991b1b" opacity="0.8">sparks  flickering LEDs</text>
+  </g>
+
+  <!-- Deploy Station -->
+  <g>
+    <rect x="610" y="250" width="250" height="145" rx="6" fill="#1a1520" stroke="#d946ef" stroke-width="2" opacity="0.9"/>
+    <rect x="610" y="250" width="250" height="145" rx="6" fill="#d946ef" opacity="0.03"/>
+    <circle cx="614" cy="254" r="3" fill="#d946ef" opacity="0.5"/>
+    <circle cx="856" cy="254" r="3" fill="#d946ef" opacity="0.5"/>
+    <circle cx="614" cy="391" r="3" fill="#d946ef" opacity="0.5"/>
+    <circle cx="856" cy="391" r="3" fill="#d946ef" opacity="0.5"/>
+    <text x="735" y="278" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" font-weight="700" fill="#e879f9" filter="url(#glow-sm)">Deploy Station</text>
+    <!-- Deploy terminal -->
+    <rect x="660" y="290" width="60" height="40" rx="3" fill="#0f172a" stroke="#d946ef" stroke-width="0.8"/>
+    <text x="665" y="303" font-family="monospace" font-size="7" fill="#22c55e" opacity="0.7">$ deploy</text>
+    <text x="665" y="312" font-family="monospace" font-size="7" fill="#d946ef" opacity="0.5">building...</text>
+    <text x="665" y="321" font-family="monospace" font-size="7" fill="#22c55e" opacity="0.6">deployed!</text>
+    <!-- Rising sparks -->
+    <circle cx="780" cy="305" r="2" fill="#d946ef" opacity="0.15"/>
+    <circle cx="800" cy="290" r="1.5" fill="#d946ef" opacity="0.2"/>
+    <circle cx="820" cy="310" r="2" fill="#d946ef" opacity="0.1"/>
+    <circle cx="790" cy="325" r="1" fill="#d946ef" opacity="0.15"/>
+    <!-- Tools -->
+    <rect x="695" y="350" width="55" height="20" rx="10" fill="#1e293b" stroke="#e879f9" stroke-width="0.8"/>
+    <text x="722" y="364" text-anchor="middle" font-family="monospace" font-size="9" fill="#e879f9">Skill</text>
+    <text x="735" y="385" text-anchor="middle" font-family="monospace" font-size="8" fill="#86198f" opacity="0.8">purple rising sparks</text>
+  </g>
+
+  <!-- ═══════ POKER TABLE (center corridor) ═══════ -->
+  <g transform="translate(410, 218)" filter="url(#glow-sm)">
+    <ellipse cx="40" cy="12" rx="35" ry="12" fill="#166534" stroke="#22c55e" stroke-width="1" opacity="0.6"/>
+    <text x="40" y="16" text-anchor="middle" font-family="monospace" font-size="7" fill="#4ade80" opacity="0.7">POKER</text>
+  </g>
+
+  <!-- Legend -->
+  <text x="450" y="430" text-anchor="middle" font-family="monospace" font-size="9" fill="#475569">idle agents gather at the poker table  |  agents walk to rooms based on tool calls</text>
+
+  <!-- Border -->
+  <rect x="1" y="1" width="898" height="448" rx="8" fill="none" stroke="#00d4ff" stroke-width="0.5" opacity="0.15"/>
+</svg>

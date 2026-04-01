@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.4.0] - 2026-04-01
+
+### Performance — Major optimization pass
+- **Agent rendering**: Body redraws only on visual state change (~95% fewer GPU draws)
+- **Particle system**: O(1) swap-and-pop removal instead of O(n) splice/shift
+- **Pathfinding**: Skips calculation when no paths are pending
+- **DOM updates**: All element references pre-cached — zero querySelector per frame
+- **Stats emission**: Only emits when data changes (was every frame)
+- **Effect throttling**: Cosmetic effects at 100ms, UI sync at 250ms
+- **Agent manager**: Cached array eliminates Array.from() per call (10+ times/frame)
+- **Palette lookups**: Pre-cached color map avoids .find() + parseInt per frame
+
+### Fixed
+- First-person camera look-ahead direction (was inverted)
+- escapeHtml memory allocation (reuses single element)
+
+### Removed
+- Dead code: TilesetGenerator, WorldBuilder, Billboard (all unused)
+- Dead stream code from NeonOverlay
+- Unused terminalData map from ideWatcher
+
+## [0.3.2] - 2026-03-31
+
+### Changed
+- Updated marketplace documentation — improved description, keywords, and feature highlights
+- Added performance section and links to README
+- Expanded supported editors list (Cursor, Windsurf)
+
+## [0.3.1] - 2026-03-31
+
+### Added
+- **Smart camera system** — auto-follows active agents, frames multiple workers, returns to poker table when idle
+- **Poker table** with detailed wood grain, felt, dealer button, cards, and chip stacks
+- Clean console logs — removed debug noise
+
+### Fixed
+- Camera flash on scene transitions
+- Delta capped at 50ms to prevent lag spikes after tab switch
+
 ## [0.3.0] - 2026-03-30
 
 ### Added — Cinematic Visual Overhaul

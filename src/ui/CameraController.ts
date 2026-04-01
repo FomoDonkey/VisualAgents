@@ -137,10 +137,10 @@ export class CameraController {
       let tx = 0, ty = 0;
       const ahead = T * 2;
       switch (dir) {
-        case 'up': ty = ahead; break;
-        case 'down': ty = -ahead; break;
-        case 'left': tx = ahead; break;
-        case 'right': tx = -ahead; break;
+        case 'up': ty = -ahead; break;
+        case 'down': ty = ahead; break;
+        case 'left': tx = -ahead; break;
+        case 'right': tx = ahead; break;
       }
       this.fpOffX += (tx - this.fpOffX) * 0.04;
       this.fpOffY += (ty - this.fpOffY) * 0.04;
@@ -216,9 +216,9 @@ export class CameraController {
       // Zoom to fit all agents with padding
       const spanX = maxX - minX + 200;
       const spanY = maxY - minY + 150;
-      const zx = CONFIG.GAME_WIDTH / spanX;
-      const zy = CONFIG.GAME_HEIGHT / spanY;
-      tz = Phaser.Math.Clamp(Math.min(zx, zy), 0.9, 1.8);
+      const zx = this.camera.width / spanX;
+      const zy = this.camera.height / spanY;
+      tz = Phaser.Math.Clamp(Math.min(zx, zy), 1.0, 2.2);
     }
 
     // Smooth lerp to target — fast and fluid

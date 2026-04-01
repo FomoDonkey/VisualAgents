@@ -1,8 +1,8 @@
 {
   "name": "visualagents",
   "displayName": "Visual Code Agents",
-  "description": "Watch your Claude Code agents work in a pixel-art office. Connect any Claude Code session and see your agents move, code, search, and deploy in real time.",
-  "version": "0.3.1",
+  "description": "Watch AI agents work in a cinematic pixel-art office. Visualize Claude Code, Antigravity, Copilot, and Cursor sessions — agents walk between rooms, code at desks, search archives, and play poker when idle.",
+  "version": "0.4.0",
   "publisher": "visualagents",
   "license": "MIT",
   "repository": {
@@ -13,8 +13,8 @@
     "vscode": "^1.85.0"
   },
   "categories": ["Visualization", "Other"],
-  "keywords": ["claude", "claude-code", "agents", "visualization", "pixel-art", "antigravity", "ai-agents", "live", "office"],
-  "activationEvents": [],
+  "keywords": ["claude", "claude-code", "agents", "visualization", "pixel-art", "antigravity", "ai-agents", "copilot", "cursor", "real-time"],
+  "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [

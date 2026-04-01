@@ -33,6 +33,9 @@ export class CinematicEffects {
   // Room ambient particles
   private roomParticles: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: number; size: number; room: number }[] = [];
 
+  // Cached agent color map (avoids .find() + parseInt per agent per frame)
+  private agentColorCache: Map<string, number> = new Map();
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.reflectionGfx = scene.add.graphics().setDepth(450); // Just below agent sprites (500)
@@ -44,6 +47,14 @@ export class CinematicEffects {
 
   setAgentManager(am: AgentManager): void {
     this.agentManager = am;
+    // Pre-cache agent colors to avoid .find() + parseInt() every frame
+    for (const p of AGENT_PALETTES) {
+      this.agentColorCache.set(p.id, parseInt(p.color.replace('#', ''), 16));
+    }
+  }
+
+  private getAgentColor(id: string): number {
+    return this.agentColorCache.get(id) ?? 0x4a8aff;
   }
 
   private createHoloSigns(): void {
@@ -89,8 +100,7 @@ export class CinematicEffects {
   private updateAgentReflections(t: number): void {
     if (!this.agentManager) return;
     for (const a of this.agentManager.getAllAgents()) {
-      const pal = AGENT_PALETTES.find(p => p.id === a.id);
-      const color = pal ? parseInt(pal.color.replace('#', ''), 16) : 0x4a8aff;
+      const color = this.getAgentColor(a.id);
 
       // Reflection (flipped, faded, below)
       const rx = a.sprite.x;
@@ -113,8 +123,7 @@ export class CinematicEffects {
   private updateAgentLightCones(t: number): void {
     if (!this.agentManager) return;
     for (const a of this.agentManager.getAllAgents()) {
-      const pal = AGENT_PALETTES.find(p => p.id === a.id);
-      const color = pal ? parseInt(pal.color.replace('#', ''), 16) : 0x4a8aff;
+      const color = this.getAgentColor(a.id);
       const s = a.fsm.state;
 
       let radius = T * 1.2;
@@ -144,8 +153,7 @@ export class CinematicEffects {
       if (a.fsm.state !== 'working' && a.fsm.state !== 'thinking') continue;
       if (!a.currentTask) continue;
 
-      const pal = AGENT_PALETTES.find(p => p.id === a.id);
-      const color = pal ? parseInt(pal.color.replace('#', ''), 16) : 0x4a8aff;
+      const color = this.getAgentColor(a.id);
       const building = BUILDINGS.find(b => b.type === a.currentTask!.building);
       if (!building) continue;
 
@@ -155,7 +163,7 @@ export class CinematicEffects {
       const ay = a.sprite.y;
 
       // Pulsing beam segments
-      const segments = 12;
+      const segments = 6;
       const pulse = t * 4;
 
       for (let i = 0; i < segments; i++) {
@@ -199,7 +207,7 @@ export class CinematicEffects {
     const dt = delta / 1000;
 
     // Spawn new particles occasionally
-    if (Math.random() < 0.15) {
+    if (Math.random() < 0.05) {
       const ri = Math.floor(Math.random() * BUILDINGS.length);
       const b = BUILDINGS[ri];
       const def = ROOM_DEFS[b.type];
@@ -207,7 +215,7 @@ export class CinematicEffects {
       const px = (b.x + 1 + Math.random() * (b.width - 2)) * T;
       const py = (b.y + 1 + Math.random() * (b.height - 2)) * T;
 
-      let color = def.accent;
+      let color: number = def.accent;
       let vx = 0, vy = 0, size = 0.5;
 
       if (b.type === 'terminal-tower') {
@@ -246,7 +254,7 @@ export class CinematicEffects {
         size = 0.2;
       }
 
-      if (this.roomParticles.length < 80) {
+      if (this.roomParticles.length < 40) {
         this.roomParticles.push({
           x: px, y: py, vx, vy,
           life: 2000 + Math.random() * 2000,
@@ -256,11 +264,12 @@ export class CinematicEffects {
       }
     }
 
-    // Update and draw
-    for (let i = this.roomParticles.length - 1; i >= 0; i--) {
+    // Update and draw (swap-and-pop removal)
+    let len = this.roomParticles.length;
+    for (let i = len - 1; i >= 0; i--) {
       const p = this.roomParticles[i];
       p.life -= delta;
-      if (p.life <= 0) { this.roomParticles.splice(i, 1); continue; }
+      if (p.life <= 0) { this.roomParticles[i] = this.roomParticles[--len]; continue; }
 
       p.x += p.vx * dt;
       p.y += p.vy * dt;
@@ -269,6 +278,7 @@ export class CinematicEffects {
       this.overlayGfx.fillStyle(p.color, alpha * 0.3);
       this.overlayGfx.fillCircle(p.x, p.y, p.size);
     }
+    this.roomParticles.length = len;
   }
 
   // === SCANLINES on wall monitors ===

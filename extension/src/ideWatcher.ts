@@ -27,7 +27,6 @@ export class IdeWatcher {
   private onEvents: EventCallback;
   private active = false;
   private recentEdits: Map<string, number> = new Map(); // debounce file saves
-  private terminalData: Map<string, string> = new Map();
 
   constructor(onEvents: EventCallback) {
     this.onEvents = onEvents;

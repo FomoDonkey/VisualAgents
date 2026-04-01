@@ -2,20 +2,23 @@
 
 **Watch your AI coding agents work in real time inside a stunning pixel-art office.**
 
-Visual Code Agents transforms your Claude Code sessions into a cinematic animated visualization. Agents walk between rooms, sit at desks, search archives, run terminals, and deploy code — all mapped from real tool calls happening in your editor. When they're idle, they play poker together at the break room table.
+Visual Code Agents transforms your Claude Code sessions into a cinematic animated visualization. Agents walk between themed rooms, sit at desks, search archives, run terminals, and deploy code — all mapped from real tool calls happening in your editor. When they're idle, they gather around a poker table and play cards until the next task arrives.
 
-Works with **VS Code**, **Antigravity (Google)**, and any VS Code-based editor.
+Works with **VS Code**, **Antigravity (Google)**, **Cursor**, and any VS Code-based editor.
+
+> **New in v0.4.0** — Major performance optimization: ~95% fewer GPU draw calls, O(1) particle removal, cached DOM lookups, fixed first-person camera direction, dead code cleanup. Smooth and lightweight.
 
 ---
 
 ## Highlights
 
-- **Cinematic office** — Neon-lit rooms, animated monitors with scrolling code, flickering server LEDs, swaying plants, holographic room signs, floor reflections, dynamic lighting
-- **Expressive agents** — 3D-shaded characters with blinking eyes, colored irises, facial expressions (smile, frown, focus, surprise), arm/leg animations while walking, glowing trails
-- **Smart camera** — Auto-follows the action: zooms into active agents, frames multiple agents working simultaneously, returns to the poker table when everyone's idle
-- **Real-time activity log** — Every tool call logged with timestamps, icons, and color coding
+- **Cinematic office** — 6 neon-lit rooms with animated monitors, scrolling code, flickering server LEDs, swaying plants, holographic room signs, floor reflections, and dynamic lighting
+- **Expressive agents** — 3D-shaded characters with blinking eyes, colored irises, facial expressions (smile, frown, focus, surprise), arm/leg animations, and glowing trails
+- **Smart auto-camera** — Follows active agents, frames multiple workers simultaneously, smoothly returns to the poker table when everyone's idle
+- **Real-time activity log** — Every tool call logged with timestamps, tool-specific icons, and color coding
 - **Zero-config for Antigravity** — IDE watcher captures file changes from any AI agent automatically
-- **Poker table** — Idle agents sit around a detailed poker table playing cards until real work arrives
+- **Poker table** — Idle agents sit around a detailed poker table with cards and chips until real work arrives
+- **Multi-agent support** — Up to 5 agents visualized simultaneously with unique colors and names
 
 ---
 
@@ -32,9 +35,9 @@ Every tool call from your AI agent is mapped to a visual action in the office:
 
 ### Dual Event Sources
 - **Claude Code hooks** — captures every tool use with full detail (tool name, file path, result)
-- **IDE activity watcher** — detects file saves, creates, deletes, and terminal activity from any AI agent (Antigravity Gemini, Copilot, Cursor, etc.)
+- **IDE activity watcher** — detects file saves, creates, deletes, and terminal activity from any AI agent (Antigravity Gemini, GitHub Copilot, Cursor, Windsurf, etc.)
 
-Both sources run simultaneously.
+Both sources run simultaneously — you get the richest visualization when hooks are active, and baseline visualization from any AI tool with zero configuration.
 
 ### Interactive Controls
 - **Click** an agent to follow them with the camera
@@ -144,9 +147,20 @@ When idle, all agents sit around a poker table in the break area playing cards. 
 
 ## Requirements
 
-- VS Code 1.85+ / Antigravity / any VS Code fork
-- For Claude Code: Claude Code CLI installed
-- Node.js (for the hook script)
+- VS Code 1.85+ / Antigravity / Cursor / any VS Code fork
+- For Claude Code hooks: Claude Code CLI + Node.js 18+
+- No external assets or dependencies — all sprites are procedurally generated
+
+## Performance
+
+- **v0.4.0 optimized** — agents only redraw when visual state changes (~95% fewer GPU calls)
+- Hook execution: <10ms per event
+- Hardware-accelerated canvas rendering via Phaser.js
+- O(1) particle removal via swap-and-pop pattern
+- Cached DOM element references — zero querySelector per frame
+- Pathfinding skips calculation when no paths are pending
+- Cosmetic effects throttled to 10fps, UI sync to 4fps
+- Delta capped at 50ms to prevent lag spikes after tab switches
 
 ## FAQ
 
@@ -167,10 +181,13 @@ That's the smart auto-camera. It follows active agents and returns to the poker 
 
 ---
 
-## Changelog
+## Links
 
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+- [GitHub Repository](https://github.com/FomoDonkey/VisualAgents)
+- [Changelog](CHANGELOG.md)
+- [Contributing Guide](https://github.com/FomoDonkey/VisualAgents/blob/master/CONTRIBUTING.md)
+- [Report Issues](https://github.com/FomoDonkey/VisualAgents/issues)
 
 ## License
 
-MIT
+MIT — [0xArlee](https://github.com/FomoDonkey)

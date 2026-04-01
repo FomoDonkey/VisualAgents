@@ -108,6 +108,8 @@ export class RealtimeEngine {
   };
   private taskCounter = 0;
   private activeToolByAgent: Map<string, number> = new Map(); // agent slot → start time
+  private statsDirty = true;
+  private statsTimer = 0;
 
   constructor(agentManager: AgentManager) {
     this.agentManager = agentManager;
@@ -138,7 +140,13 @@ export class RealtimeEngine {
       }
     }
 
-    eventBus.emit(EVENTS.WORLD_STATS_UPDATED, this.stats);
+    // Only emit stats when they changed (or every 2s as catch-all)
+    this.statsTimer += delta;
+    if (this.statsDirty || this.statsTimer > 2000) {
+      eventBus.emit(EVENTS.WORLD_STATS_UPDATED, this.stats);
+      this.statsDirty = false;
+      this.statsTimer = 0;
+    }
   }
 
   /** Force an immediate poll (ignores timer). */
@@ -224,10 +232,12 @@ export class RealtimeEngine {
       } else {
         this.stats.tasksCompleted++;
       }
-      if (ev.tool.toLowerCase() === 'write' || ev.tool.toLowerCase() === 'edit') this.stats.filesEdited++;
-      if (ev.tool.toLowerCase() === 'bash') this.stats.testsRun++;
-      if (ev.tool.toLowerCase() === 'grep' || ev.tool.toLowerCase() === 'websearch') this.stats.searchesDone++;
-      if (ev.tool.toLowerCase() === 'skill') this.stats.deploysCompleted++;
+      const tl = ev.tool.toLowerCase();
+      if (tl === 'write' || tl === 'edit') this.stats.filesEdited++;
+      if (tl === 'bash') this.stats.testsRun++;
+      if (tl === 'grep' || tl === 'websearch') this.stats.searchesDone++;
+      if (tl === 'skill') this.stats.deploysCompleted++;
+      this.statsDirty = true;
 
       // Force-complete the agent's current task
       const s = agent.fsm.state;

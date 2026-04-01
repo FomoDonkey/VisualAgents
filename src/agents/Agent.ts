@@ -54,6 +54,11 @@ export class Agent {
   private eyeLookX = 0;
   private eyeLookY = 0;
   private lookTimer = 0;
+  private lastDrawnBlink = false;
+  private lastDrawnState: AgentState = 'idle';
+  private lastDrawnEyeX = 0;
+  private lastDrawnEyeY = 0;
+  private bodyRedrawTimer = 0;
 
   constructor(
     scene: Phaser.Scene, id: string, name: string,
@@ -295,15 +300,12 @@ export class Agent {
     // Eye direction
     this.lookTimer += delta;
     if (s === 'walking') {
-      // Eyes look in walk direction
       this.eyeLookX = this.direction === 'right' ? 1 : this.direction === 'left' ? -1 : 0;
       this.eyeLookY = this.direction === 'down' ? 0.5 : this.direction === 'up' ? -0.5 : 0;
     } else if (s === 'working' || s === 'thinking') {
-      // Eyes look down at desk/work
       this.eyeLookX = Math.sin(this.lookTimer / 2000) * 0.5;
       this.eyeLookY = 0.4;
     } else if (s === 'idle') {
-      // Occasionally look around
       if (this.lookTimer > 3000) {
         this.lookTimer = 0;
         this.eyeLookX = (Math.random() - 0.5) * 2;
@@ -314,8 +316,24 @@ export class Agent {
       this.eyeLookY = 0;
     }
 
-    // Redraw body with current blink/eye state
-    this.drawBody(isBlinking);
+    // Only redraw body when visual state actually changed — saves 30+ graphics ops/frame/agent
+    this.bodyRedrawTimer += delta;
+    const needsRedraw =
+      isBlinking !== this.lastDrawnBlink ||
+      s !== this.lastDrawnState ||
+      (s === 'walking' && this.bodyRedrawTimer > 80) ||  // Walk animation frames
+      Math.abs(this.eyeLookX - this.lastDrawnEyeX) > 0.3 ||
+      Math.abs(this.eyeLookY - this.lastDrawnEyeY) > 0.3 ||
+      this.bodyRedrawTimer > 500;  // Catch-all refresh every 500ms
+
+    if (needsRedraw) {
+      this.drawBody(isBlinking);
+      this.lastDrawnBlink = isBlinking;
+      this.lastDrawnState = s;
+      this.lastDrawnEyeX = this.eyeLookX;
+      this.lastDrawnEyeY = this.eyeLookY;
+      this.bodyRedrawTimer = 0;
+    }
   }
 
   // === STATE CALLBACKS ===

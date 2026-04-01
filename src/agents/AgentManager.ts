@@ -19,6 +19,7 @@ const POKER_SEATS = [
 export class AgentManager {
   private scene: Phaser.Scene;
   private agents: Map<string, Agent> = new Map();
+  private agentsArray: Agent[] = [];  // Cached array — avoids Array.from() allocation per frame
   private selectedAgentId: string | null = null;
 
   constructor(scene: Phaser.Scene, pathGrid: PathGrid) {
@@ -39,11 +40,12 @@ export class AgentManager {
       agent.sprite.x = seat.px;
       agent.sprite.y = seat.py;
       this.agents.set(p.id, agent);
+      this.agentsArray.push(agent);
     }
   }
 
   getAgent(id: string): Agent | undefined { return this.agents.get(id); }
-  getAllAgents(): Agent[] { return Array.from(this.agents.values()); }
+  getAllAgents(): Agent[] { return this.agentsArray; }
   getSelectedAgent(): Agent | null {
     return this.selectedAgentId ? this.agents.get(this.selectedAgentId) || null : null;
   }

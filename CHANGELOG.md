@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-04-01
+
+### Performance — Major optimization pass
+- **Agent rendering**: Body only redraws when visual state changes (was 30+ graphics ops/frame/agent, now ~95% fewer redraws)
+- **Particle system**: Swap-and-pop removal instead of O(n) splice/shift — eliminates array copying
+- **Pathfinding**: EasyStar.calculate() now skips frames with no pending paths
+- **DOM updates**: Cached all badge/FP element references — zero querySelector calls per frame
+- **Stats emission**: Only emits WORLD_STATS_UPDATED when data changes (was every frame)
+- **Effect throttling**: Cosmetic effects throttled to 100ms (was 66ms), UI sync to 250ms (was 150ms)
+- **Agent manager**: Cached agents array — eliminated Array.from() allocation every frame (10+ calls/frame)
+- **Palette lookups**: Pre-cached agent color map — eliminated .find() + parseInt per agent per frame in CinematicEffects
+- **Single agent loop**: Merged 3 separate particle timer loops into one pass over agents
+
+### Fixed
+- **Camera look-ahead inverted**: First-person camera now correctly looks ahead of walking agent (was looking behind)
+- **escapeHtml leak**: Reuses single DOM element instead of creating one per call
+- **TypeScript type error**: Room particle color variable properly typed
+
+### Removed — Dead code cleanup
+- Deleted unused `TilesetGenerator.ts` (empty stub with `TILE = {} as any`)
+- Deleted unused `WorldBuilder.ts` (never instantiated, referenced undefined tile constants)
+- Deleted unused `Billboard.ts` (never instantiated)
+- Removed dead data stream code from `NeonOverlay.ts` (empty array iterated every frame)
+- Removed unused `terminalData` map from `ideWatcher.ts`
+
+## [0.3.2] - 2026-03-31
+
+### Changed
+- Updated marketplace documentation — improved description, keywords, and feature highlights
+- Added performance section and links to extension README
+- Expanded supported editors list (Cursor, Windsurf)
+
 ## [0.3.1] - 2026-03-31
 
 ### Added

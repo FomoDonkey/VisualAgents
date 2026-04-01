@@ -36,7 +36,11 @@ export class ParticleManager {
   // === AGENT TRAIL — glowing line behind walking agents ===
   addTrailPoint(x: number, y: number, color: number): void {
     this.trails.push({ x, y, age: 0, color });
-    if (this.trails.length > 200) this.trails.shift();
+    // Cap trail length — swap oldest to end and pop (O(1) vs shift O(n))
+    if (this.trails.length > 80) {
+      this.trails[0] = this.trails[this.trails.length - 1];
+      this.trails.pop();
+    }
   }
 
   // === FLOATING TEXT — rises and fades ===
@@ -53,7 +57,7 @@ export class ParticleManager {
 
   // === SUCCESS — green sparkle burst ===
   emitSuccess(x: number, y: number): void {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       const angle = (Math.PI * 2 * i) / 10 + (Math.random() - 0.5) * 0.3;
       const speed = 20 + Math.random() * 25;
       this.particles.push({
@@ -89,7 +93,7 @@ export class ParticleManager {
 
   // === THINKING — floating orbs that orbit ===
   emitThinking(x: number, y: number): void {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       const angle = Math.random() * Math.PI * 2;
       this.particles.push({
         x: x + Math.cos(angle) * 5,
@@ -108,7 +112,7 @@ export class ParticleManager {
 
   // === WALK DUST ===
   emitWalkDust(x: number, y: number): void {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 1; i++) {
       this.particles.push({
         x: x + (Math.random() - 0.5) * 6,
         y: y + 8,
@@ -125,7 +129,7 @@ export class ParticleManager {
 
   // === CODING — blue/green sparkle fountain ===
   emitCoding(x: number, y: number): void {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       this.particles.push({
         x: x + (Math.random() - 0.5) * 12,
         y: y - 6,
@@ -163,7 +167,7 @@ export class ParticleManager {
 
   // === DEPLOY — rocket flame trail upward ===
   emitDeploy(x: number, y: number): void {
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 3; i++) {
       this.particles.push({
         x: x + (Math.random() - 0.5) * 6,
         y: y + 6,
@@ -180,7 +184,7 @@ export class ParticleManager {
 
   // === TERMINAL — matrix rain ===
   emitTerminal(x: number, y: number): void {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       this.particles.push({
         x: x + (Math.random() - 0.5) * 16,
         y: y - 12,
@@ -198,7 +202,7 @@ export class ParticleManager {
 
   // === AMBIENT DUST ===
   emitAmbientDust(worldWidth: number, worldHeight: number): void {
-    if (this.particles.length > 300) return;
+    if (this.particles.length > 100) return;
     this.particles.push({
       x: Math.random() * worldWidth,
       y: Math.random() * worldHeight,
@@ -217,12 +221,13 @@ export class ParticleManager {
     this.graphics.clear();
     this.glowGraphics.clear();
 
-    // === Draw agent trails ===
-    for (let i = this.trails.length - 1; i >= 0; i--) {
+    // === Draw agent trails (swap-and-pop removal) ===
+    let trailLen = this.trails.length;
+    for (let i = trailLen - 1; i >= 0; i--) {
       const t = this.trails[i];
       t.age += delta;
       if (t.age > 600) {
-        this.trails.splice(i, 1);
+        this.trails[i] = this.trails[--trailLen];
         continue;
       }
       const alpha = 1 - (t.age / 600);
@@ -231,12 +236,15 @@ export class ParticleManager {
       this.glowGraphics.fillCircle(t.x, t.y, 3 + alpha * 3);
     }
 
-    // === Draw particles ===
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    this.trails.length = trailLen;
+
+    // === Draw particles (swap-and-pop removal) ===
+    let partLen = this.particles.length;
+    for (let i = partLen - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= delta;
       if (p.life <= 0) {
-        this.particles.splice(i, 1);
+        this.particles[i] = this.particles[--partLen];
         continue;
       }
 
@@ -293,6 +301,7 @@ export class ParticleManager {
         );
       }
     }
+    this.particles.length = partLen;
   }
 
   destroy(): void {

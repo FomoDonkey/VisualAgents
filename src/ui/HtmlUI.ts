@@ -1,16 +1,19 @@
-import { AGENT_PALETTES } from '../config';
+import { AGENT_PALETTES, ROOM_NAMES } from '../config';
 import { eventBus } from '../simulation/EventBus';
 import { EVENTS } from '../types/events';
 import { WorldStats, AgentState } from '../types';
 
-const ROOM_NAMES: Record<string, string> = {
-  'think-tank': 'Meeting Room', 'search-station': 'Research Corner',
-  'file-library': 'Archive Room', 'code-workshop': 'Dev Floor',
-  'terminal-tower': 'Server Room', 'deploy-dock': 'Deploy Station',
-};
+interface BadgeElements {
+  root: HTMLElement;
+  state: HTMLElement | null;
+  task: HTMLElement | null;
+  bar: HTMLElement | null;
+  dot: HTMLElement | null;
+}
 
 export class HtmlUI {
-  private agentCards: Map<string, HTMLElement> = new Map();
+  private agentBadges: Map<string, HTMLElement> = new Map();
+  private badgeElements: Map<string, BadgeElements> = new Map();
   private logContainer: HTMLElement;
   private logCount = 0;
   private startTime = Date.now();
@@ -22,6 +25,12 @@ export class HtmlUI {
   private fpOverlay: HTMLElement;
   private fpFeed: HTMLElement;
   private fpFeedItems: HTMLElement[] = [];
+  // Cached FP DOM refs
+  private fpStateEl: HTMLElement | null = null;
+  private fpProjectEl: HTMLElement | null = null;
+  private fpDescEl: HTMLElement | null = null;
+  private fpFileEl: HTMLElement | null = null;
+  private fpBarEl: HTMLElement | null = null;
 
   // Callbacks to scene
   public onSelectAgent: ((id: string) => void) | null = null;
@@ -32,60 +41,70 @@ export class HtmlUI {
     this.logContainer = document.getElementById('activity-log')!;
     this.fpOverlay = document.getElementById('fp-overlay')!;
     this.fpFeed = document.getElementById('fp-feed')!;
-    this.createAgentCards();
+    this.fpStateEl = document.getElementById('fp-state');
+    this.fpProjectEl = document.getElementById('fp-project');
+    this.fpDescEl = document.getElementById('fp-desc');
+    this.fpFileEl = document.getElementById('fp-file');
+    this.fpBarEl = document.getElementById('fp-bar');
+    this.createAgentBadges();
     this.setupEventListeners();
     this.setupFPControls();
     this.loadNames();
   }
 
-  // === AGENT CARDS ===
-  private createAgentCards(): void {
-    const list = document.getElementById('agents-list')!;
-    list.innerHTML = '';
+  // === AGENT BADGES (compact mini cards) ===
+  private createAgentBadges(): void {
+    const container = document.getElementById('hud-agents')!;
+    container.innerHTML = '';
 
     for (const agent of AGENT_PALETTES) {
       this.agentNames.set(agent.id, agent.name);
 
-      const style = document.createElement('style');
-      style.textContent = `.agent-card[data-agent-id="${agent.id}"]::before{background:${agent.color}}`;
-      document.head.appendChild(style);
-
-      const card = document.createElement('div');
-      card.className = 'agent-card';
-      card.dataset.agentId = agent.id;
-      card.innerHTML = `
-        <div class="a-row">
-          <div class="a-dot" style="background:${agent.color};box-shadow:0 0 6px ${agent.color}40"></div>
-          <span class="a-name" data-f="name">${agent.name}</span>
-          <span class="a-rename" title="Rename agent">✏️</span>
-          <span class="a-badge idle" data-f="state">IDLE</span>
+      const badge = document.createElement('div');
+      badge.className = 'agent-badge';
+      badge.dataset.agentId = agent.id;
+      badge.innerHTML = `
+        <div class="ab-dot" style="background:${agent.color};box-shadow:0 0 4px ${agent.color}40"></div>
+        <div class="ab-info">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="ab-name" data-f="name">${agent.name}</span>
+            <span class="ab-rename" title="Rename agent">✏️</span>
+          </div>
+          <span class="ab-task" data-f="task">Waiting...</span>
+          <div class="ab-bar"><div class="ab-fill" data-f="bar" style="width:0%;background:${agent.color}"></div></div>
         </div>
-        <div class="a-task" data-f="task">Waiting for assignment...</div>
-        <div class="a-loc" data-f="room"></div>
-        <div class="a-bar"><div class="a-fill" data-f="bar" style="width:0%;background:${agent.color}"></div></div>
+        <span class="ab-state idle" data-f="state">IDLE</span>
       `;
 
-      card.addEventListener('click', (e) => {
-        if ((e.target as HTMLElement).classList.contains('a-rename')) return;
+      badge.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).classList.contains('ab-rename')) return;
         this.selectAgent(agent.id);
       });
 
-      card.addEventListener('dblclick', (e) => {
+      badge.addEventListener('dblclick', (e) => {
         const target = e.target as HTMLElement;
-        if (target.classList.contains('a-rename') || target.classList.contains('a-name')) return;
+        if (target.classList.contains('ab-rename') || target.classList.contains('ab-name')) return;
         e.preventDefault();
         this.enterFirstPerson(agent.id);
       });
 
-      const renameBtn = card.querySelector('.a-rename') as HTMLElement;
-      const nameEl = card.querySelector('.a-name') as HTMLElement;
+      const renameBtn = badge.querySelector('.ab-rename') as HTMLElement;
+      const nameEl = badge.querySelector('.ab-name') as HTMLElement;
       renameBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.startRename(agent.id, nameEl);
       });
 
-      list.appendChild(card);
-      this.agentCards.set(agent.id, card);
+      container.appendChild(badge);
+      this.agentBadges.set(agent.id, badge);
+      // Cache DOM references to avoid querySelector on every update
+      this.badgeElements.set(agent.id, {
+        root: badge,
+        state: badge.querySelector('[data-f="state"]'),
+        task: badge.querySelector('[data-f="task"]'),
+        bar: badge.querySelector('[data-f="bar"]'),
+        dot: badge.querySelector('.ab-dot'),
+      });
     }
   }
 
@@ -95,7 +114,7 @@ export class HtmlUI {
     const input = document.createElement('input');
     input.type = 'text';
     input.value = current;
-    input.style.cssText = 'background:var(--bg-primary);border:1px solid var(--accent);color:var(--text-primary);font-family:inherit;font-size:12px;font-weight:600;padding:1px 4px;border-radius:3px;width:90px;outline:none;';
+    input.style.cssText = 'background:var(--bg-primary);border:1px solid var(--accent);color:var(--text-primary);font-family:inherit;font-size:10px;font-weight:600;padding:1px 4px;border-radius:3px;width:70px;outline:none;';
 
     nameEl.textContent = '';
     nameEl.appendChild(input);
@@ -124,9 +143,9 @@ export class HtmlUI {
   setAgentDisplayName(agentId: string, name: string): void {
     if (this.agentNames.get(agentId) === name) return;
     this.agentNames.set(agentId, name);
-    const card = this.agentCards.get(agentId);
-    if (card) {
-      const el = card.querySelector('[data-f="name"]');
+    const badge = this.agentBadges.get(agentId);
+    if (badge) {
+      const el = badge.querySelector('[data-f="name"]');
       if (el) el.textContent = name;
     }
   }
@@ -138,9 +157,9 @@ export class HtmlUI {
         const names = JSON.parse(saved);
         for (const [id, name] of Object.entries(names)) {
           this.agentNames.set(id, name as string);
-          const card = this.agentCards.get(id);
-          if (card) {
-            const el = card.querySelector('[data-f="name"]');
+          const badge = this.agentBadges.get(id);
+          if (badge) {
+            const el = badge.querySelector('[data-f="name"]');
             if (el) el.textContent = name as string;
           }
         }
@@ -152,15 +171,15 @@ export class HtmlUI {
   setMode(mode: 'live'): void {
     const modeInd = document.getElementById('mode-ind');
     if (modeInd) {
-      modeInd.textContent = '🟢 LIVE — Claude Code';
+      modeInd.textContent = '● LIVE';
       modeInd.style.color = 'var(--success)';
     }
   }
 
   // === SELECT ===
   selectAgent(id: string): void {
-    document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
-    this.agentCards.get(id)?.classList.add('selected');
+    document.querySelectorAll('.agent-badge').forEach(c => c.classList.remove('selected'));
+    this.agentBadges.get(id)?.classList.add('selected');
     if (this.fpActive) {
       this.fpAgentId = id;
       this.updateFPHeader(id);
@@ -178,9 +197,12 @@ export class HtmlUI {
     this.fpFeed.innerHTML = '';
     this.fpFeedItems = [];
     this.updateFPHeader(agentId);
-    document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
-    this.agentCards.get(agentId)?.classList.add('selected');
+    document.querySelectorAll('.agent-badge').forEach(c => c.classList.remove('selected'));
+    this.agentBadges.get(agentId)?.classList.add('selected');
     document.getElementById('btn-fp')?.classList.add('active');
+    // Hide HUD elements in FP mode for maximum immersion
+    document.getElementById('hud-agents')?.classList.add('collapsed');
+    document.getElementById('hud-activity')?.classList.add('collapsed');
     this.onEnterFP?.(agentId);
   }
 
@@ -190,6 +212,9 @@ export class HtmlUI {
     this.fpAgentId = null;
     this.fpOverlay.classList.remove('active');
     document.getElementById('btn-fp')?.classList.remove('active');
+    // Restore HUD elements
+    document.getElementById('hud-agents')?.classList.remove('collapsed');
+    document.getElementById('hud-activity')?.classList.remove('collapsed');
     this.onExitFP?.();
   }
 
@@ -215,43 +240,32 @@ export class HtmlUI {
     });
     document.getElementById('btn-fp')?.addEventListener('click', () => {
       if (this.fpActive) { this.exitFirstPerson(); return; }
-      const sel = document.querySelector('.agent-card.selected');
+      const sel = document.querySelector('.agent-badge.selected');
       const id = sel?.getAttribute('data-agent-id') || AGENT_PALETTES[0].id;
       this.enterFirstPerson(id);
     });
   }
 
-  // === UPDATES ===
+  // === UPDATES (using cached DOM references) ===
   updateAgent(agentId: string, state: AgentState, taskDesc: string, room: string, progress: number): void {
-    const card = this.agentCards.get(agentId);
-    if (!card) return;
-    const q = (sel: string) => card.querySelector(`[data-f="${sel}"]`) as HTMLElement | null;
-    const stateEl = q('state');
-    if (stateEl) { stateEl.textContent = state.toUpperCase(); stateEl.className = `a-badge ${state}`; }
-    q('task')?.replaceChildren(document.createTextNode(taskDesc || 'Waiting for assignment...'));
-    const roomEl = q('room');
-    if (roomEl) roomEl.textContent = room ? `📍 ${room}` : '';
-    const barEl = q('bar');
-    if (barEl) barEl.style.width = `${Math.min(100, Math.max(0, progress))}%`;
-    const dot = card.querySelector('.a-dot') as HTMLElement;
-    if (dot) {
-      if (state === 'working' || state === 'thinking') dot.classList.add('active');
-      else dot.classList.remove('active');
+    const els = this.badgeElements.get(agentId);
+    if (!els) return;
+    if (els.state) { els.state.textContent = state.toUpperCase(); els.state.className = `ab-state ${state}`; }
+    if (els.task) els.task.textContent = taskDesc || 'Waiting...';
+    if (els.bar) els.bar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    if (els.dot) {
+      if (state === 'working' || state === 'thinking') els.dot.classList.add('active');
+      else els.dot.classList.remove('active');
     }
   }
 
   updateFirstPerson(state: AgentState, taskDesc: string, room: string, progress: number, _project: string, relatedFile: string): void {
     if (!this.fpActive) return;
-    const se = document.getElementById('fp-state') as HTMLElement;
-    if (se) { se.textContent = state.toUpperCase(); se.className = `fp-state a-badge ${state}`; }
-    const p = document.getElementById('fp-project') as HTMLElement;
-    if (p) p.textContent = room || '—';
-    const d = document.getElementById('fp-desc') as HTMLElement;
-    if (d) d.textContent = taskDesc || 'Waiting...';
-    const f = document.getElementById('fp-file') as HTMLElement;
-    if (f) f.textContent = relatedFile || '—';
-    const b = document.getElementById('fp-bar') as HTMLElement;
-    if (b) b.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    if (this.fpStateEl) { this.fpStateEl.textContent = state.toUpperCase(); this.fpStateEl.className = `fp-state ab-state ${state}`; }
+    if (this.fpProjectEl) this.fpProjectEl.textContent = room || '—';
+    if (this.fpDescEl) this.fpDescEl.textContent = taskDesc || 'Waiting...';
+    if (this.fpFileEl) this.fpFileEl.textContent = relatedFile || '—';
+    if (this.fpBarEl) this.fpBarEl.style.width = `${Math.min(100, Math.max(0, progress))}%`;
   }
 
   addFirstPersonFeed(text: string, type: string = ''): void {
@@ -270,7 +284,7 @@ export class HtmlUI {
   }
   updateFPS(fps: number): void {
     const el = document.getElementById('fps-c');
-    if (el) el.textContent = `${fps} FPS`;
+    if (el) el.textContent = `${fps}`;
   }
 
   // === EVENTS ===
@@ -332,21 +346,22 @@ export class HtmlUI {
     entry.innerHTML =
       `<span class="l-time">${h}:${m}:${s}</span>` +
       `<span class="l-agent" style="color:${color}">${this.escapeHtml(name)}</span>` +
-      `<span class="l-action">${this.escapeHtml(action)}</span>` +
-      (detail ? `<span class="l-detail">📍 ${this.escapeHtml(detail)}</span>` : '');
+      `<span class="l-action">${this.escapeHtml(action)}</span>`;
 
     this.logContainer.appendChild(entry);
     this.logCount++;
     this.logContainer.scrollTop = this.logContainer.scrollHeight;
-    while (this.logContainer.children.length > 300) this.logContainer.removeChild(this.logContainer.firstChild!);
+    // Keep only last 8 entries visible for compact feed
+    while (this.logContainer.children.length > 8) this.logContainer.removeChild(this.logContainer.firstChild!);
     const c = document.getElementById('log-count');
-    if (c) c.textContent = `${this.logCount} events`;
+    if (c) c.textContent = `${this.logCount}`;
   }
 
+  private static _escDiv: HTMLDivElement | null = null;
   private escapeHtml(str: string): string {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    if (!HtmlUI._escDiv) HtmlUI._escDiv = document.createElement('div');
+    HtmlUI._escDiv.textContent = str;
+    return HtmlUI._escDiv.innerHTML;
   }
 
   private updateStats(stats: WorldStats): void {

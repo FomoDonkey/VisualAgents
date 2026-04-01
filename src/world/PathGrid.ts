@@ -6,6 +6,7 @@ import { BUILDINGS } from './BuildingRegistry';
 
 export class PathGrid {
   private easystar: any;
+  private pendingPaths = 0;
 
   constructor() {
     this.easystar = new EasyStarJS();
@@ -64,6 +65,7 @@ export class PathGrid {
   }
 
   findPath(from: TilePos, to: TilePos): Promise<TilePos[]> {
+    this.pendingPaths++;
     return new Promise((resolve) => {
       const w = CONFIG.WORLD_WIDTH;
       const h = CONFIG.WORLD_HEIGHT;
@@ -73,6 +75,7 @@ export class PathGrid {
       const ty = Math.max(0, Math.min(to.y, h - 1));
 
       this.easystar.findPath(fx, fy, tx, ty, (path: any) => {
+        this.pendingPaths--;
         if (path === null) {
           resolve([{ x: tx, y: ty }]);
         } else {
@@ -84,6 +87,9 @@ export class PathGrid {
   }
 
   update(): void {
-    this.easystar.calculate();
+    // Only run pathfinding when there are pending calculations
+    if (this.pendingPaths > 0) {
+      this.easystar.calculate();
+    }
   }
 }

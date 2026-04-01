@@ -16,6 +16,17 @@
 - `acquireVsCodeApi()` is only available in webviews — detect before calling
 - Phaser works in VS Code webviews since it only uses Canvas/WebGL (no special CSP needed)
 
+## Performance (v0.4.0)
+- Agent.drawBody() is the most expensive per-frame operation (30+ graphics calls). Throttling to only redraw on state change reduced CPU usage dramatically.
+- Array.from(map.values()) called 10+ times per frame is surprisingly expensive — cache the array.
+- splice() and shift() in hot loops cause O(n) array copies. Swap-and-pop is O(1) and trivial to implement.
+- AGENT_PALETTES.find() + parseInt() called per agent per frame per effect layer adds up fast — pre-cache in a Map.
+- querySelector() per agent per UI update cycle is wasteful — cache element refs at creation time.
+- Emitting events every frame (even with no listeners doing heavy work) has overhead — throttle or dirty-flag.
+- EasyStar.calculate() with 500 iterations per call is expensive even when no paths are queued — skip it.
+- FP camera look-ahead was inverted (up→positive Y instead of negative) — always test direction logic visually.
+- Creating DOM elements in hot paths (escapeHtml) is a subtle but real GC pressure source — reuse a single element.
+
 ## Extension Architecture
 - Dual mode: same game code runs in browser (HTTP polling) and webview (postMessage)
 - Extension host watches events.jsonl and posts events to webview

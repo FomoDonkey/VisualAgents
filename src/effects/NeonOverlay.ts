@@ -6,28 +6,16 @@ import { ROOM_DEFS } from '../config';
 const T = CONFIG.TILE_SIZE;
 
 /**
- * Animated neon overlay: glowing room borders, data streams
- * flowing through corridors, pulsing energy grid.
+ * Animated neon overlay: glowing room borders, pulsing energy grid.
  */
 export class NeonOverlay {
   private scene: Phaser.Scene;
   private neonGfx: Phaser.GameObjects.Graphics;
-  private streamGfx: Phaser.GameObjects.Graphics;
   private timer = 0;
-
-  // Data stream particles flowing through corridors
-  private streams: { x: number; y: number; speed: number; color: number; size: number; dir: 'h' | 'v' }[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.neonGfx = scene.add.graphics().setDepth(5);
-    this.streamGfx = scene.add.graphics().setDepth(2);
-
-    this.initStreams();
-  }
-
-  private initStreams(): void {
-    // No corridor streams — clean corridors
   }
 
   update(delta: number): void {
@@ -35,10 +23,8 @@ export class NeonOverlay {
     const t = this.timer / 1000;
 
     this.neonGfx.clear();
-    this.streamGfx.clear();
 
     this.drawNeonRoomBorders(t);
-    this.drawDataStreams(delta);
     this.drawCorridorEdgeGlow(t);
   }
 
@@ -83,36 +69,6 @@ export class NeonOverlay {
       const nameY = y + 10;
       this.neonGfx.fillStyle(def.accent, pulse * 0.3);
       this.neonGfx.fillRect(nameX - 20, nameY + 4, 40, 1);
-    }
-  }
-
-  private drawDataStreams(delta: number): void {
-    const dt = delta / 1000;
-
-    for (const s of this.streams) {
-      if (s.dir === 'h') {
-        s.x += s.speed * dt;
-        if (s.x > 39 * T) s.x = 10 * T;
-      } else {
-        s.y += s.speed * dt;
-        if (s.y > CONFIG.WORLD_HEIGHT * T) s.y = 0;
-      }
-
-      // Bright head
-      this.streamGfx.fillStyle(s.color, 0.6);
-      this.streamGfx.fillCircle(s.x, s.y, s.size);
-
-      // Glow halo
-      this.streamGfx.fillStyle(s.color, 0.12);
-      this.streamGfx.fillCircle(s.x, s.y, s.size * 3);
-
-      // Trail (3 fading dots behind)
-      for (let j = 1; j <= 3; j++) {
-        const tx = s.dir === 'h' ? s.x - j * 4 * Math.sign(s.speed) : s.x;
-        const ty = s.dir === 'v' ? s.y - j * 4 * Math.sign(s.speed) : s.y;
-        this.streamGfx.fillStyle(s.color, 0.3 / j);
-        this.streamGfx.fillCircle(tx, ty, s.size * (1 - j * 0.2));
-      }
     }
   }
 

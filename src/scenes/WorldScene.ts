@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CONFIG } from '../config';
+import { CONFIG, ROOM_NAMES } from '../config';
 import { OfficeRenderer } from '../world/OfficeRenderer';
 import { PathGrid } from '../world/PathGrid';
 import { AgentManager } from '../agents/AgentManager';
@@ -12,13 +12,17 @@ import { NeonOverlay } from '../effects/NeonOverlay';
 import { CinematicEffects } from '../effects/CinematicEffects';
 import { eventBus } from '../simulation/EventBus';
 import { EVENTS } from '../types/events';
+import { AGENT_PALETTES } from '../config';
 import { HtmlUI } from '../ui/HtmlUI';
 
-const ROOM_NAMES: Record<string, string> = {
-  'think-tank': 'Meeting Room', 'search-station': 'Research Corner',
-  'file-library': 'Archive Room', 'code-workshop': 'Dev Floor',
-  'terminal-tower': 'Server Room', 'deploy-dock': 'Deploy Station',
-};
+interface SpeechBubble {
+  container: Phaser.GameObjects.Container;
+  bg: Phaser.GameObjects.Graphics;
+  textObj: Phaser.GameObjects.Text;
+  tail: Phaser.GameObjects.Graphics;
+  timer: number;
+  agentId: string;
+}
 
 export class WorldScene extends Phaser.Scene {
   public agentManager!: AgentManager;
@@ -35,6 +39,11 @@ export class WorldScene extends Phaser.Scene {
   private thinkTimer = 0;
   private walkDustTimer = 0;
   private workParticleTimer = 0;
+  private cosmeticTimer = 0;
+  private speechBubbles: Map<string, SpeechBubble> = new Map();
+  // Cached palette colors to avoid .find() + parseInt per call
+  private agentColors: Map<string, number> = new Map();
+
 
   constructor() { super({ key: 'WorldScene' }); }
 
@@ -57,6 +66,11 @@ export class WorldScene extends Phaser.Scene {
     this.cinematic = new CinematicEffects(this);
     this.cinematic.setAgentManager(this.agentManager);
 
+    // Pre-cache agent palette colors
+    for (const p of AGENT_PALETTES) {
+      this.agentColors.set(p.id, parseInt(p.color.replace('#', ''), 16));
+    }
+
     this.setupEvents();
     this.connectUI();
 
@@ -75,57 +89,59 @@ export class WorldScene extends Phaser.Scene {
     this.pathGrid.update();
 
     this.realtime.update(delta);
-    this.ambient.update(delta);
-    this.neon.update(delta);
-    this.cinematic.update(delta);
+
+    // Cosmetic effects — throttled to ~10fps (every 100ms)
+    this.cosmeticTimer += delta;
+    if (this.cosmeticTimer >= 100) {
+      this.ambient.update(this.cosmeticTimer);
+      this.neon.update(this.cosmeticTimer);
+      this.cinematic.update(this.cosmeticTimer);
+      this.cosmeticTimer = 0;
+    }
+
+    this.updateSpeechBubbles(delta);
 
     // Work particles — themed by task type
     this.thinkTimer += delta;
     this.walkDustTimer += delta;
     this.workParticleTimer += delta;
 
-    if (this.thinkTimer > 400) {
-      this.thinkTimer = 0;
+    // Particle effects — single agent loop handles all particle timers
+    const needThink = this.thinkTimer > 800;
+    const needDust = this.walkDustTimer > 200;
+    const needWork = this.workParticleTimer > 1000;
+
+    if (needThink || needDust || needWork) {
+      const trailColors: Record<string, number> = { blue: 0x4a8aff, red: 0xff5a6a, green: 0x40cc70, purple: 0xaa6aef, orange: 0xffa040 };
+
       for (const a of this.agentManager.getAllAgents()) {
-        if (a.fsm.state === 'thinking') {
+        const s = a.fsm.state;
+        if (needThink && s === 'thinking') {
           this.particles.emitThinking(a.sprite.x, a.sprite.y);
         }
-      }
-    }
-
-    // Walk dust + trail every 100ms for walking agents
-    if (this.walkDustTimer > 100) {
-      this.walkDustTimer = 0;
-      for (const a of this.agentManager.getAllAgents()) {
-        if (a.fsm.state === 'walking') {
+        if (needDust && s === 'walking') {
           this.particles.emitWalkDust(a.sprite.x, a.sprite.y);
-          // Glowing trail behind agent
-          const pal = { blue: 0x4a8aff, red: 0xff5a6a, green: 0x40cc70, purple: 0xaa6aef, orange: 0xffa040 };
-          this.particles.addTrailPoint(a.sprite.x, a.sprite.y + 6, (pal as any)[a.id] || 0x4a8aff);
+          this.particles.addTrailPoint(a.sprite.x, a.sprite.y + 6, trailColors[a.id] || 0x4a8aff);
+        }
+        if (needWork && s === 'working' && a.currentTask) {
+          const t = a.currentTask.type;
+          if (t === 'write') this.particles.emitCoding(a.sprite.x, a.sprite.y);
+          else if (t === 'search' || t === 'read') this.particles.emitSearch(a.sprite.x, a.sprite.y);
+          else if (t === 'deploy') this.particles.emitDeploy(a.sprite.x, a.sprite.y);
+          else if (t === 'bash') this.particles.emitTerminal(a.sprite.x, a.sprite.y);
         }
       }
+
+      if (needThink) this.thinkTimer = 0;
+      if (needDust) this.walkDustTimer = 0;
+      if (needWork) this.workParticleTimer = 0;
     }
 
-    // Work-specific particles every 500ms
-    if (this.workParticleTimer > 500) {
-      this.workParticleTimer = 0;
-      for (const a of this.agentManager.getAllAgents()) {
-        if (a.fsm.state !== 'working' || !a.currentTask) continue;
-        const t = a.currentTask.type;
-        if (t === 'write') this.particles.emitCoding(a.sprite.x, a.sprite.y);
-        else if (t === 'search' || t === 'read') this.particles.emitSearch(a.sprite.x, a.sprite.y);
-        else if (t === 'deploy') this.particles.emitDeploy(a.sprite.x, a.sprite.y);
-        else if (t === 'bash') this.particles.emitTerminal(a.sprite.x, a.sprite.y);
-      }
-    }
-
-    // Ambient dust
-    this.particles.emitAmbientDust(CONFIG.WORLD_WIDTH * CONFIG.TILE_SIZE, CONFIG.WORLD_HEIGHT * CONFIG.TILE_SIZE);
-
-    // HTML UI sync
+    // Ambient dust + UI sync — throttled
     this.uiTimer += delta;
-    if (this.uiTimer >= 100) {
+    if (this.uiTimer >= 250) {
       this.uiTimer = 0;
+      this.particles.emitAmbientDust(CONFIG.WORLD_WIDTH * CONFIG.TILE_SIZE, CONFIG.WORLD_HEIGHT * CONFIG.TILE_SIZE);
       this.syncUI();
     }
   }
@@ -188,46 +204,139 @@ export class WorldScene extends Phaser.Scene {
         this.agentManager.selectAgent(null);
         this.cameraController.stopFollow();
         this.htmlUI.exitFirstPerson();
-        document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.agent-badge').forEach(c => c.classList.remove('selected'));
       }
     });
   }
 
   private setupEvents(): void {
-    // Task assigned — floating text label + activation flash
+    // Task assigned — show speech bubble above agent
     eventBus.on(EVENTS.AGENT_TASK_ASSIGNED, (d: { agentId: string; task: any }) => {
       const a = this.agentManager.getAgent(d.agentId);
       if (!a) return;
-      // Floating label showing what the agent is doing
-      const label = this.add.text(a.sprite.x, a.sprite.y - 20, d.task.description, {
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '8px',
-        color: '#ffffff',
-        stroke: '#000000',
-        strokeThickness: 3,
-        align: 'center',
-      }).setOrigin(0.5, 1).setDepth(2000).setAlpha(1);
-      // Animate: float up and fade
-      this.tweens.add({
-        targets: label,
-        y: label.y - 24,
-        alpha: 0,
-        duration: 1800,
-        ease: 'Cubic.easeOut',
-        onComplete: () => label.destroy(),
-      });
+      // Truncate description for bubble
+      let desc = d.task.description || '';
+      if (desc.length > 40) desc = desc.substring(0, 38) + '…';
+      this.showSpeechBubble(d.agentId, desc, 5000);
     });
 
-    // Task complete — big particle burst
+    // Task complete — short flash bubble + particles
     eventBus.on(EVENTS.AGENT_TASK_COMPLETE, (d: { agentId: string; result: string }) => {
       const a = this.agentManager.getAgent(d.agentId);
       if (!a) return;
       if (d.result === 'success') {
         this.particles.emitSuccess(a.sprite.x, a.sprite.y);
+        this.showSpeechBubble(d.agentId, '✓ Done!', 2000);
       } else {
         this.particles.emitError(a.sprite.x, a.sprite.y);
         this.cameras.main.shake(150, 0.002);
+        this.showSpeechBubble(d.agentId, '✗ Error!', 2500);
       }
     });
+  }
+
+  // ===== SPEECH BUBBLE SYSTEM — RPG/game style dialogue above agents =====
+
+  private showSpeechBubble(agentId: string, text: string, duration: number): void {
+    // Remove existing bubble for this agent
+    this.removeSpeechBubble(agentId);
+
+    const accentHex = this.agentColors.get(agentId) ?? 0x4a8aff;
+
+    // Create container
+    const container = this.add.container(0, 0).setDepth(2500);
+
+    // Create text first to measure width
+    const textObj = this.add.text(0, 0, text, {
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: '9px',
+      color: '#e0e0f0',
+      padding: { x: 0, y: 0 },
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+
+    const paddingX = 10;
+    const paddingY = 6;
+    const bw = textObj.width + paddingX * 2;
+    const bh = textObj.height + paddingY * 2;
+    const tailH = 6;
+
+    // Bubble background
+    const bg = this.add.graphics();
+    bg.fillStyle(0x0c0c18, 0.92);
+    bg.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, 6);
+    // Border with agent color
+    bg.lineStyle(1.5, accentHex, 0.7);
+    bg.strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, 6);
+
+    // Tail (triangle pointing down)
+    const tail = this.add.graphics();
+    tail.fillStyle(0x0c0c18, 0.92);
+    tail.fillTriangle(
+      -5, bh / 2,
+      5, bh / 2,
+      0, bh / 2 + tailH
+    );
+    // Tail border
+    tail.lineStyle(1.5, accentHex, 0.7);
+    tail.lineBetween(-5, bh / 2, 0, bh / 2 + tailH);
+    tail.lineBetween(5, bh / 2, 0, bh / 2 + tailH);
+
+    container.add([bg, tail, textObj]);
+
+    // Pop-in animation
+    container.setScale(0);
+    container.setAlpha(0);
+    this.tweens.add({
+      targets: container,
+      scaleX: 1, scaleY: 1, alpha: 1,
+      duration: 200,
+      ease: 'Back.easeOut',
+    });
+
+    const bubble: SpeechBubble = { container, bg, textObj, tail, timer: duration, agentId };
+    this.speechBubbles.set(agentId, bubble);
+
+    // Position immediately
+    const agent = this.agentManager.getAgent(agentId);
+    if (agent) {
+      container.setPosition(agent.sprite.x, agent.sprite.y - 28 - bh / 2 - tailH);
+    }
+  }
+
+  private removeSpeechBubble(agentId: string): void {
+    const existing = this.speechBubbles.get(agentId);
+    if (existing) {
+      existing.container.destroy();
+      this.speechBubbles.delete(agentId);
+    }
+  }
+
+  private updateSpeechBubbles(delta: number): void {
+    for (const [id, bubble] of this.speechBubbles) {
+      bubble.timer -= delta;
+
+      // Follow agent position
+      const agent = this.agentManager.getAgent(id);
+      if (agent) {
+        const bh = bubble.textObj.height + 12;
+        const tailH = 6;
+        const targetX = agent.sprite.x;
+        const targetY = agent.sprite.y - 28 - bh / 2 - tailH;
+        // Smooth follow
+        bubble.container.x += (targetX - bubble.container.x) * 0.2;
+        bubble.container.y += (targetY - bubble.container.y) * 0.2;
+      }
+
+      // Fade out when timer low
+      if (bubble.timer < 500) {
+        bubble.container.setAlpha(bubble.timer / 500);
+      }
+
+      if (bubble.timer <= 0) {
+        bubble.container.destroy();
+        this.speechBubbles.delete(id);
+      }
+    }
   }
 }

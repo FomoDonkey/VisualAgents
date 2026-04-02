@@ -218,6 +218,15 @@ export class ParticleManager {
   }
 
   update(delta: number): void {
+    // Skip all GPU work when nothing to draw
+    if (this.particles.length === 0 && this.trails.length === 0) {
+      // Still need to clear once after last particle dies
+      if (this.graphics.commandBuffer.length > 0) {
+        this.graphics.clear();
+        this.glowGraphics.clear();
+      }
+      return;
+    }
     this.graphics.clear();
     this.glowGraphics.clear();
 

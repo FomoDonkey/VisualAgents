@@ -18,12 +18,18 @@ export class NeonOverlay {
     this.neonGfx = scene.add.graphics().setDepth(5);
   }
 
+  private updateTimer = 0;
+
   update(delta: number): void {
     this.timer += delta;
+
+    // Neon borders only pulse slowly — 300ms is plenty smooth
+    this.updateTimer += delta;
+    if (this.updateTimer < 300) return;
+    this.updateTimer = 0;
+
     const t = this.timer / 1000;
-
     this.neonGfx.clear();
-
     this.drawNeonRoomBorders(t);
     this.drawCorridorEdgeGlow(t);
   }

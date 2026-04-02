@@ -369,19 +369,28 @@ export class HtmlUI {
     return HtmlUI._escDiv.innerHTML;
   }
 
-  private updateStats(stats: WorldStats): void {
-    const total = stats.tasksCompleted + stats.tasksFailed;
-    const rate = total > 0 ? Math.round((stats.tasksCompleted / total) * 100) : 100;
-    this.s('s-tasks', String(stats.tasksCompleted));
-    this.s('s-files', String(stats.filesEdited));
-    this.s('s-tests', String(stats.testsRun));
-    this.s('s-deploys', String(stats.deploysCompleted));
-    this.s('s-rate', `${rate}%`);
-    this.s('sb-c', String(stats.tasksCompleted));
-    this.s('sb-f', String(stats.tasksFailed));
-    this.s('sb-s', String(stats.searchesDone));
-    this.s('sb-d', String(stats.deploysCompleted));
+  // Cached stat elements — avoid getElementById on every stats update
+  private statEls: Record<string, HTMLElement | null> = {};
+  private initStatEls(): void {
+    for (const id of ['s-tasks','s-files','s-tests','s-deploys','s-rate','sb-c','sb-f','sb-s','sb-d']) {
+      this.statEls[id] = document.getElementById(id);
+    }
   }
 
-  private s(id: string, t: string): void { const el = document.getElementById(id); if (el) el.textContent = t; }
+  private updateStats(stats: WorldStats): void {
+    if (!this.statEls['s-tasks']) this.initStatEls();
+    const total = stats.tasksCompleted + stats.tasksFailed;
+    const rate = total > 0 ? Math.round((stats.tasksCompleted / total) * 100) : 100;
+    this.ss('s-tasks', String(stats.tasksCompleted));
+    this.ss('s-files', String(stats.filesEdited));
+    this.ss('s-tests', String(stats.testsRun));
+    this.ss('s-deploys', String(stats.deploysCompleted));
+    this.ss('s-rate', `${rate}%`);
+    this.ss('sb-c', String(stats.tasksCompleted));
+    this.ss('sb-f', String(stats.tasksFailed));
+    this.ss('sb-s', String(stats.searchesDone));
+    this.ss('sb-d', String(stats.deploysCompleted));
+  }
+
+  private ss(id: string, t: string): void { const el = this.statEls[id]; if (el) el.textContent = t; }
 }

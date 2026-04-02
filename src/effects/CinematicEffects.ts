@@ -79,21 +79,39 @@ export class CinematicEffects {
     }
   }
 
+  private fastTimer = 0;
+  private slowTimer = 0;
+
   update(delta: number): void {
     this.timer += delta;
     const t = this.timer / 1000;
 
+    // Fast effects (reflections, beams) — every update call (~100ms)
     this.reflectionGfx.clear();
     this.beamGfx.clear();
-    this.overlayGfx.clear();
 
-    this.updateAgentReflections(t);
-    this.updateAgentLightCones(t);
-    this.updateEnergyBeams(t);
-    this.updateHoloSigns(t);
-    this.updateRoomAmbientParticles(delta, t);
-    this.updateScanlines(t);
-    this.updateIdlePulse(t);
+    if (this.agentManager) {
+      const hasActive = this.agentManager.getAllAgents().some(
+        a => a.fsm.state !== 'idle'
+      );
+      // Only draw reflections/lightcones/beams when agents are active
+      if (hasActive) {
+        this.updateAgentReflections(t);
+        this.updateAgentLightCones(t);
+        this.updateEnergyBeams(t);
+      }
+    }
+
+    // Slow effects — every 300ms (signs, particles, scanlines, idle pulse)
+    this.slowTimer += delta;
+    if (this.slowTimer >= 300) {
+      this.overlayGfx.clear();
+      this.updateHoloSigns(t);
+      this.updateRoomAmbientParticles(this.slowTimer, t);
+      this.updateScanlines(t);
+      this.updateIdlePulse(t);
+      this.slowTimer = 0;
+    }
   }
 
   // === AGENT REFLECTIONS — mirrored silhouettes below agents ===

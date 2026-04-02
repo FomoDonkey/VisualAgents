@@ -154,13 +154,35 @@ export class AmbientAnimations {
     }
   }
 
+  private monitorTimer = 0;
+  private ledTimer = 0;
+  private slowTimer = 0;
+
   update(delta: number): void {
     this.timer += delta;
     const t = this.timer / 1000;
-    this.updateMonitors(t);
-    this.updateLeds(t);
-    this.updatePlants(t);
-    this.updateRoomGlows(delta);
+
+    // Monitors: update every 200ms (was every 100ms — 50% reduction)
+    this.monitorTimer += delta;
+    if (this.monitorTimer >= 200) {
+      this.updateMonitors(t);
+      this.monitorTimer = 0;
+    }
+
+    // LEDs: update every 300ms (tiny dots, don't need high frequency)
+    this.ledTimer += delta;
+    if (this.ledTimer >= 300) {
+      this.updateLeds(t);
+      this.ledTimer = 0;
+    }
+
+    // Plants + room glows: update every 500ms (very slow animations)
+    this.slowTimer += delta;
+    if (this.slowTimer >= 500) {
+      this.updatePlants(t);
+      this.updateRoomGlows(this.slowTimer);
+      this.slowTimer = 0;
+    }
   }
 
   private updateMonitors(t: number): void {

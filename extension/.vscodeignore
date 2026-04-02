@@ -5,3 +5,6 @@ tsconfig.json
 **/*.ts
 !dist/**
 !dist-webview/**
+events.jsonl
+*.vsix
+icon_original.png

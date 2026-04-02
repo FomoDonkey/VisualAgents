@@ -2,7 +2,7 @@
   "name": "visualagents",
   "displayName": "Visual Code Agents",
   "description": "Watch AI agents work in a cinematic pixel-art office. Visualize Claude Code, Antigravity, Copilot, and Cursor sessions — agents walk between rooms, code at desks, search archives, and play poker when idle.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publisher": "visualagents",
   "license": "MIT",
   "icon": "icon.png",

@@ -6,7 +6,7 @@ Visual Code Agents transforms your Claude Code sessions into a cinematic animate
 
 Works with **VS Code**, **Antigravity (Google)**, **Cursor**, and any VS Code-based editor.
 
-> **New in v0.4.0** — Major performance optimization: ~95% fewer GPU draw calls, O(1) particle removal, cached DOM lookups, fixed first-person camera direction, dead code cleanup. Smooth and lightweight.
+> **New in v0.5.1** — Smart event batching for natural agent movement, ~60% fewer draw calls when idle, auto-open on activity detection, critical hook fix for error tracking, square marketplace icon. Smooth and lightweight.
 
 ---
 

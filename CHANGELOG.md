@@ -4,6 +4,48 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-04-02
+
+### Changed
+- Updated all documentation to reflect current version (v0.5.2)
+- README badge version updated from 0.4.0 to 0.5.2
+- Extension README "New in" section updated with v0.5.x features
+- Added missing changelog entries for v0.4.1, v0.5.0, and v0.5.1
+
+## [0.5.1] - 2026-04-02
+
+### Performance — ~60% fewer draw calls when idle
+- **ParticleManager**: Skip GPU clear/redraw when no particles or trails
+- **AmbientAnimations**: Split into fast/slow timers (monitors 200ms, LEDs 300ms, plants/glows 500ms)
+- **NeonOverlay**: Throttle from 100ms to 300ms (slow pulse doesn't need high frequency)
+- **CinematicEffects**: Skip reflections/beams when all agents idle, slow effects at 300ms
+- **HtmlUI**: Cache stat DOM elements (avoid 9× getElementById per update)
+- Net result: ~4800 → ~1900 draw calls/sec when idle
+
+## [0.5.0] - 2026-04-02
+
+### Added
+- **Event batching system**: Groups rapid tool calls into single visual tasks — agents walk, work, and return naturally instead of flickering in place
+- **Auto-open**: Panel opens automatically when agent activity is detected (global hooks + fs.watch)
+- Room name shown in activity log entries
+- WebFetch counted in search stats
+- Square 256×256 icon for marketplace visibility
+- Published to Open VSX Registry
+
+### Fixed
+- **Critical hook bug**: Read `tool_response` (not `tool_result`) from Claude Code, enabling error detection, fail stats, and agent error state
+- Tool routing typos (`askuserquestion`, `notebookedit`)
+- Speech bubble background resize on batch text updates
+
+## [0.4.1] - 2026-04-01
+
+### Changed
+- Refactored extension panel and event watcher
+- Updated index.html layout and config
+
+### Removed
+- Unused modules: SpeechBubble, StatusIndicator, HudScene, CharacterGenerator, TextureGenerator
+
 ## [0.4.0] - 2026-04-01
 
 ### Performance — Major optimization pass

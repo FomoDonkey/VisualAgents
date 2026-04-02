@@ -5,7 +5,7 @@
 <br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/FomoDonkey/VisualAgents/releases)
+[![Version](https://img.shields.io/badge/version-0.5.2-blue.svg)](https://github.com/FomoDonkey/VisualAgents/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.85%2B-007ACC.svg?logo=visual-studio-code)](https://marketplace.visualstudio.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Phaser](https://img.shields.io/badge/Phaser-3.80-8B5CF6.svg)](https://phaser.io/)

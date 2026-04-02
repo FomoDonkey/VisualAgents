@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.5.2] - 2026-04-02
+
+### Changed
+- Updated all documentation to reflect current version
+- Added missing changelog entries for v0.4.1, v0.5.0, and v0.5.1
+
+## [0.5.1] - 2026-04-02
+
+### Performance — ~60% fewer draw calls when idle
+- **ParticleManager**: Skip GPU clear/redraw when no particles or trails
+- **AmbientAnimations**: Split into fast/slow timers (monitors 200ms, LEDs 300ms, plants/glows 500ms)
+- **NeonOverlay**: Throttle from 100ms to 300ms
+- **CinematicEffects**: Skip reflections/beams when all agents idle
+- **HtmlUI**: Cache stat DOM elements
+- Net result: ~4800 → ~1900 draw calls/sec when idle
+
+## [0.5.0] - 2026-04-02
+
+### Added
+- **Event batching**: Groups rapid tool calls into single visual tasks for natural agent movement
+- **Auto-open**: Panel opens automatically on agent activity detection
+- Room name in activity log entries
+- WebFetch counted in search stats
+- Square 256×256 marketplace icon
+- Published to Open VSX Registry
+
+### Fixed
+- **Critical**: Hook now reads `tool_response` (not `tool_result`), enabling error detection and fail stats
+- Tool routing typos (`askuserquestion`, `notebookedit`)
+- Speech bubble background resize on batch text updates
+
+## [0.4.1] - 2026-04-01
+
+### Changed
+- Refactored extension panel and event watcher
+- Updated index.html layout and config
+
+### Removed
+- Unused modules: SpeechBubble, StatusIndicator, HudScene, CharacterGenerator, TextureGenerator
+
 ## [0.4.0] - 2026-04-01
 
 ### Performance — Major optimization pass

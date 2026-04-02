@@ -2,11 +2,13 @@ export const CONFIG = {
   TILE_SIZE: 24,
   WORLD_WIDTH: 40,
   WORLD_HEIGHT: 28,
-  GAME_WIDTH: 960,
-  GAME_HEIGHT: 672,
-  DEFAULT_ZOOM: 1.3,
-  MIN_ZOOM: 0.55,
-  MAX_ZOOM: 3.5,
+  // Game dimensions — used as reference, actual size set by Phaser RESIZE mode
+  GAME_WIDTH: 1280,
+  GAME_HEIGHT: 900,
+  // Zoom levels — increased for better visibility in small viewports
+  DEFAULT_ZOOM: 1.8,
+  MIN_ZOOM: 0.6,
+  MAX_ZOOM: 4.0,
   AGENT_SPEED: 55,
   CAMERA_LERP: 0.1,
   CAMERA_SCROLL_SPEED: 300,
@@ -14,8 +16,8 @@ export const CONFIG = {
   TICK_INTERVAL: 500,
   ERROR_RATE: 0.08,
   NUM_AGENTS: 5,
-  FP_ZOOM: 2.5,
-  FOLLOW_ZOOM: 1.5,
+  FP_ZOOM: 3.0,
+  FOLLOW_ZOOM: 2.2,
 } as const;
 
 export const AGENT_PALETTES = [
@@ -34,3 +36,9 @@ export const ROOM_DEFS = {
   'terminal-tower': { name: 'Server Room',     floor: 0x141420, accent: 0xff5a6a },
   'deploy-dock':    { name: 'Deploy Station',  floor: 0x1e1a26, accent: 0xaa6aef },
 } as const;
+
+export const ROOM_NAMES: Record<string, string> = {
+  'think-tank': 'Meeting Room', 'search-station': 'Research Corner',
+  'file-library': 'Archive Room', 'code-workshop': 'Dev Floor',
+  'terminal-tower': 'Server Room', 'deploy-dock': 'Deploy Station',
+};

@@ -41,7 +41,18 @@
       "Bash(git commit:*)",
       "Bash(gh repo:*)",
       "Bash(gh issue:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(ls -la /c/Users/edgar/Desktop/proyectos/VisualAgents/extension/*.json)",
+      "Bash(wc -l /c/Users/edgar/Desktop/proyectos/VisualAgents/src/**/*.ts)",
+      "Bash(bash -c history)",
+      "Read(//c/Users/edgar/**)",
+      "Bash(ls /c/Users/edgar/Desktop/proyectos/VisualAgents/extension/*.vsix)",
+      "Bash(ls ~/ovsx*)",
+      "Bash(ls /c/Users/edgar/.eclipse*)",
+      "Bash(env)",
+      "Bash(ls -la /c/Users/edgar/Desktop/proyectos/VisualAgents/extension/dist*)",
+      "Bash(wc:*)",
+      "Bash(git rm:*)"
     ]
   },
   "hooks": {

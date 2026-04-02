@@ -92,11 +92,6 @@ export function activate(context: vscode.ExtensionContext) {
 
           if (!settings.hooks) settings.hooks = {};
 
-          const hookEntry = {
-            matcher: '',
-            hooks: [{ type: 'command', command: `node "${hookPathNorm}" ` }],
-          };
-
           // Merge — don't overwrite existing hooks
           for (const phase of ['PreToolUse', 'PostToolUse']) {
             const cmd = `node "${hookPathNorm}" ${phase === 'PreToolUse' ? 'pre' : 'post'}`;
@@ -156,10 +151,22 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Auto-open if configured
-  const config = vscode.workspace.getConfiguration('visualagents');
-  if (config.get<boolean>('autoOpen')) {
+  // Auto-open when agent activity is detected
+  const autoOpenConfig = vscode.workspace.getConfiguration('visualagents');
+  const autoOpen = autoOpenConfig.get<boolean>('autoOpen');
+
+  if (autoOpen) {
     VisualizationPanel.createOrShow(context);
+  } else {
+    // Lightweight auto-open: just one listener for file saves (minimal resources)
+    // The full IdeWatcher with all its listeners only starts when the panel opens
+    const saveWatcher = vscode.workspace.onDidSaveTextDocument(() => {
+      if (!VisualizationPanel.currentInstance()) {
+        VisualizationPanel.createOrShow(context);
+      }
+      saveWatcher.dispose(); // One-shot: stop after first trigger
+    });
+    context.subscriptions.push(saveWatcher);
   }
 }
 

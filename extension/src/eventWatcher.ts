@@ -43,8 +43,8 @@ export class EventWatcher {
       // File doesn't exist yet — poll until it does
     }
 
-    // Poll as backup (every 500ms) — handles cases where fs.watch misses events
-    this.pollInterval = setInterval(() => this.readNewLines(), 500);
+    // Poll as backup (every 2s) — handles cases where fs.watch misses events
+    this.pollInterval = setInterval(() => this.readNewLines(), 2000);
   }
 
   stop(): void {

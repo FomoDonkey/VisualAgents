@@ -1,0 +1,89 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm info:*)",
+      "WebFetch(domain:newdocs.phaser.io)",
+      "WebFetch(domain:phaser.io)",
+      "WebFetch(domain:rexrainbow.github.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(node:*)",
+      "Bash(curl -s \"http://localhost:5173/src/main.ts\")",
+      "Bash(curl -s http://localhost:5173/src/main.ts)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(npx vite:*)",
+      "WebSearch",
+      "Bash(npm run:*)",
+      "Bash(npx vsce:*)",
+      "Bash(npx @vscode/vsce package --no-dependencies)",
+      "Bash(code:*)",
+      "Bash(where antigravity:*)",
+      "Bash(antigravity:*)",
+      "Bash(cd:*)",
+      "WebFetch(domain:antigravity.google)",
+      "WebFetch(domain:discuss.ai.google.dev)",
+      "WebFetch(domain:atamel.dev)",
+      "Read(//c/Users/edgar/Desktop/proyectos/VisualAgents/extension/.config/antigravity/logs/**)",
+      "Read(//c/Users/edgar/Desktop/proyectos/VisualAgents/extension/$HOME/.config/antigravity/logs/**)",
+      "Read(//c/Users/edgar/Desktop/proyectos/VisualAgents/extension/$LOCALAPPDATA/antigravity/**)",
+      "Read(//c/Users/edgar/Desktop/proyectos/VisualAgents/extension/$APPDATA/antigravity/**)",
+      "Bash(npx ovsx:*)",
+      "Read(//c/Users/edgar/Desktop/proyectos/VisualAgents/extension/$USERPROFILE/.vscode/**)",
+      "Read(//c/Users/edgar/Desktop/proyectos/VisualAgents/extension/$USERPROFILE/.vscode/extensions/visualagents.visualagents-0.2.0/**)",
+      "WebFetch(domain:www.eclipse.org)",
+      "Bash(gh auth:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh issue:*)",
+      "Bash(git push:*)",
+      "Bash(ls -la /c/Users/edgar/Desktop/proyectos/VisualAgents/extension/*.json)",
+      "Bash(wc -l /c/Users/edgar/Desktop/proyectos/VisualAgents/src/**/*.ts)",
+      "Bash(bash -c history)",
+      "Read(//c/Users/edgar/**)",
+      "Bash(ls /c/Users/edgar/Desktop/proyectos/VisualAgents/extension/*.vsix)",
+      "Bash(ls ~/ovsx*)",
+      "Bash(ls /c/Users/edgar/.eclipse*)",
+      "Bash(env)",
+      "Bash(ls -la /c/Users/edgar/Desktop/proyectos/VisualAgents/extension/dist*)",
+      "Bash(wc:*)",
+      "Bash(git rm:*)",
+      "Bash(npx antigravity:*)",
+      "Bash(ag --help)",
+      "Bash(vsce --version)",
+      "Bash(identify \"C:/Users/edgar/Desktop/proyectos/VisualAgents/extension/icon.png\")",
+      "Bash(magick --version)",
+      "Bash(npx sharp-cli:*)",
+      "Bash(git rebase:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/edgar/Desktop/proyectos/VisualAgents/hooks/va-hook.cjs pre"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/edgar/Desktop/proyectos/VisualAgents/hooks/va-hook.cjs post"
+          }
+        ]
+      }
+    ]
+  }
+}

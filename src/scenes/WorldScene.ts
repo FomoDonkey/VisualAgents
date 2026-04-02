@@ -211,13 +211,19 @@ export class WorldScene extends Phaser.Scene {
 
   private setupEvents(): void {
     // Task assigned — show speech bubble above agent
-    eventBus.on(EVENTS.AGENT_TASK_ASSIGNED, (d: { agentId: string; task: any }) => {
+    eventBus.on(EVENTS.AGENT_TASK_ASSIGNED, (d: { agentId: string; task: any; silent?: boolean }) => {
       const a = this.agentManager.getAgent(d.agentId);
       if (!a) return;
-      // Truncate description for bubble
       let desc = d.task.description || '';
       if (desc.length > 40) desc = desc.substring(0, 38) + '…';
-      this.showSpeechBubble(d.agentId, desc, 5000);
+
+      if (d.silent) {
+        // Batch update — update text smoothly without pop-in animation
+        this.updateSpeechBubbleText(d.agentId, desc);
+      } else {
+        // New task — show with pop-in animation
+        this.showSpeechBubble(d.agentId, desc, 8000);
+      }
     });
 
     // Task complete — short flash bubble + particles
@@ -237,7 +243,7 @@ export class WorldScene extends Phaser.Scene {
 
   // ===== SPEECH BUBBLE SYSTEM — RPG/game style dialogue above agents =====
 
-  private showSpeechBubble(agentId: string, text: string, duration: number): void {
+  private showSpeechBubble(agentId: string, text: string, duration: number, animate = true): void {
     // Remove existing bubble for this agent
     this.removeSpeechBubble(agentId);
 
@@ -284,15 +290,17 @@ export class WorldScene extends Phaser.Scene {
 
     container.add([bg, tail, textObj]);
 
-    // Pop-in animation
-    container.setScale(0);
-    container.setAlpha(0);
-    this.tweens.add({
-      targets: container,
-      scaleX: 1, scaleY: 1, alpha: 1,
-      duration: 200,
-      ease: 'Back.easeOut',
-    });
+    if (animate) {
+      // Pop-in animation
+      container.setScale(0);
+      container.setAlpha(0);
+      this.tweens.add({
+        targets: container,
+        scaleX: 1, scaleY: 1, alpha: 1,
+        duration: 200,
+        ease: 'Back.easeOut',
+      });
+    }
 
     const bubble: SpeechBubble = { container, bg, textObj, tail, timer: duration, agentId };
     this.speechBubbles.set(agentId, bubble);
@@ -301,6 +309,17 @@ export class WorldScene extends Phaser.Scene {
     const agent = this.agentManager.getAgent(agentId);
     if (agent) {
       container.setPosition(agent.sprite.x, agent.sprite.y - 28 - bh / 2 - tailH);
+    }
+  }
+
+  /** Update an existing bubble's text — rebuilds with correct sizing, no pop-in */
+  private updateSpeechBubbleText(agentId: string, text: string): void {
+    const existing = this.speechBubbles.get(agentId);
+    if (existing) {
+      // Recreate bubble with correct background size, but skip animation
+      this.showSpeechBubble(agentId, text, 8000, false);
+    } else {
+      this.showSpeechBubble(agentId, text, 8000, true);
     }
   }
 

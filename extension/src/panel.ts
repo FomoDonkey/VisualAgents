@@ -201,6 +201,7 @@ export class VisualizationPanel {
     .log-entry .l-time{color:var(--text-dim);font-size:8px;margin-right:4px;font-variant-numeric:tabular-nums}
     .log-entry .l-agent{font-weight:600;font-size:9px;margin-right:3px}
     .log-entry .l-action{color:var(--text-secondary);font-size:9px}
+    .log-entry .l-detail{color:var(--text-dim);font-size:8px}
     @keyframes feedIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
     #hud-stats{position:absolute;bottom:56px;right:10px;z-index:10;pointer-events:auto;
       display:flex;gap:8px;padding:5px 12px;background:var(--bg-glass-solid);
@@ -275,7 +276,7 @@ export class VisualizationPanel {
     <div class="hud-stats">
       <div class="hud-stat"><span class="val" id="s-tasks">0</span><span class="lbl">tasks</span></div>
       <div class="hud-stat"><span class="val" id="s-files">0</span><span class="lbl">files</span></div>
-      <div class="hud-stat"><span class="val" id="s-tests">0</span><span class="lbl">tests</span></div>
+      <div class="hud-stat"><span class="val" id="s-tests">0</span><span class="lbl">cmds</span></div>
       <div class="hud-stat"><span class="val" id="s-deploys">0</span><span class="lbl">dep</span></div>
       <div class="hud-stat success"><span class="val" id="s-rate">100%</span><span class="lbl">ok</span></div>
     </div>

@@ -249,6 +249,13 @@ export class Agent {
     else { this.selRing.setAlpha(0); }
   }
 
+  /** Keep the agent working for at least `ms` more milliseconds (used by batch system) */
+  extendWork(ms: number): void {
+    if (this.fsm.state === 'working' || this.fsm.state === 'thinking') {
+      this.workTimer = Math.max(this.workTimer, ms);
+    }
+  }
+
   async assignTask(task: Task, targetTile: TilePos, onComplete: () => void): Promise<void> {
     this.currentTask = task;
     this.taskCallback = onComplete;

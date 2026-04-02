@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const EVENTS_FILE = path.join(__dirname, '..', 'events.jsonl');
+const EVENTS_FILE = path.join(process.env.VISUALAGENTS_EVENTS || process.cwd(), 'events.jsonl');
 const phase = process.argv[2] || 'unknown';
 
 let input = '';
@@ -60,9 +60,11 @@ function summarizeInput(data) {
 }
 
 function summarizeResult(data) {
-  const r = data.tool_result || data.result || '';
+  // Claude Code sends tool_response (not tool_result) in PostToolUse hooks
+  const r = data.tool_response || data.tool_result || data.result || '';
   if (!r) return '';
-  const s = String(r);
+  // tool_response can be an object — stringify if needed
+  const s = typeof r === 'object' ? JSON.stringify(r).substring(0, 300) : String(r);
   if (s.toLowerCase().includes('error')) return 'error';
   if (s.toLowerCase().includes('failed')) return 'failed';
   return s.substring(0, 100);

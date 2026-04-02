@@ -27,7 +27,7 @@ process.stdin.on('end', () => {
       phase,
       tool: data.tool_name || data.tool || '',
       input: summary,
-      result: data.result ? String(data.result).substring(0, 200) : '',
+      result: (() => { const r = data.tool_response || data.tool_result || data.result || ''; if (!r) return ''; const s = typeof r === 'object' ? JSON.stringify(r) : String(r); return s.substring(0, 200); })(),
       agent_id: data.agent_id || data.session_id || 'main',
       agent_name: data.agent_name || '',
       raw_type: data.type || '',
@@ -152,26 +152,73 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Auto-open when agent activity is detected
-  const autoOpenConfig = vscode.workspace.getConfiguration('visualagents');
-  const autoOpen = autoOpenConfig.get<boolean>('autoOpen');
-
-  if (autoOpen) {
-    VisualizationPanel.createOrShow(context);
-  } else {
-    // Lightweight auto-open: just one listener for file saves (minimal resources)
-    // The full IdeWatcher with all its listeners only starts when the panel opens
-    const saveWatcher = vscode.workspace.onDidSaveTextDocument(() => {
-      if (!VisualizationPanel.currentInstance()) {
-        VisualizationPanel.createOrShow(context);
-      }
-      saveWatcher.dispose(); // One-shot: stop after first trigger
-    });
-    context.subscriptions.push(saveWatcher);
-  }
+  setupAutoOpen(context);
 }
 
 export function deactivate() {
   VisualizationPanel.dispose();
+}
+
+function setupAutoOpen(context: vscode.ExtensionContext): void {
+  const wsRoot = getWorkspaceRoot();
+  if (!wsRoot) return;
+
+  const eventsFile = path.join(wsRoot, 'events.jsonl');
+  const initialSize = getFileSize(eventsFile);
+
+  // Use fs.watch on the workspace directory for instant detection
+  let dirWatcher: fs.FSWatcher | undefined;
+  try {
+    dirWatcher = fs.watch(wsRoot, (eventType, filename) => {
+      if (filename === 'events.jsonl' && !VisualizationPanel.currentInstance()) {
+        const currentSize = getFileSize(eventsFile);
+        if (currentSize > initialSize) {
+          VisualizationPanel.createOrShow(context);
+          cleanup();
+        }
+      }
+    });
+  } catch {
+    // fs.watch not supported or directory issue — fall through to polling
+  }
+
+  // Polling fallback (fs.watch can be unreliable on some systems/network drives)
+  const poller = setInterval(() => {
+    if (VisualizationPanel.currentInstance()) {
+      cleanup();
+      return;
+    }
+    const currentSize = getFileSize(eventsFile);
+    if (currentSize > initialSize) {
+      VisualizationPanel.createOrShow(context);
+      cleanup();
+    }
+  }, 1500);
+
+  function cleanup() {
+    if (dirWatcher) { try { dirWatcher.close(); } catch {} dirWatcher = undefined; }
+    clearInterval(poller);
+  }
+
+  context.subscriptions.push({ dispose: cleanup });
+}
+
+function resolveEventsPath(): string | null {
+  const config = vscode.workspace.getConfiguration('visualagents');
+  const configured = config.get<string>('eventsFile');
+  if (configured) return configured;
+  const wsRoot = getWorkspaceRoot();
+  if (!wsRoot) return null;
+  const candidate = path.join(wsRoot, 'events.jsonl');
+  return fs.existsSync(candidate) ? candidate : null;
+}
+
+function getFileSize(filePath: string): number {
+  try {
+    return fs.statSync(filePath).size;
+  } catch {
+    return 0;
+  }
 }
 
 function getClaudeHome(): string {

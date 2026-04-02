@@ -294,7 +294,10 @@ export class HtmlUI {
   };
 
   private setupEventListeners(): void {
-    eventBus.on(EVENTS.AGENT_TASK_ASSIGNED, (data: { agentId: string; task: any; projectName: string }) => {
+    eventBus.on(EVENTS.AGENT_TASK_ASSIGNED, (data: { agentId: string; task: any; projectName: string; silent?: boolean }) => {
+      // Silent events are batch updates — skip logging, bubble is handled by WorldScene
+      if (data.silent) return;
+
       const pal = AGENT_PALETTES.find(a => a.id === data.agentId);
       const name = this.agentNames.get(data.agentId) || pal?.name || data.agentId;
       const icon = HtmlUI.TOOL_ICONS[data.task.type] || '⚙️';
@@ -343,10 +346,12 @@ export class HtmlUI {
     const m = now.getMinutes().toString().padStart(2, '0');
     const s = now.getSeconds().toString().padStart(2, '0');
 
+    const detailHtml = detail ? `<span class="l-detail"> · ${this.escapeHtml(detail)}</span>` : '';
     entry.innerHTML =
       `<span class="l-time">${h}:${m}:${s}</span>` +
       `<span class="l-agent" style="color:${color}">${this.escapeHtml(name)}</span>` +
-      `<span class="l-action">${this.escapeHtml(action)}</span>`;
+      `<span class="l-action">${this.escapeHtml(action)}</span>` +
+      detailHtml;
 
     this.logContainer.appendChild(entry);
     this.logCount++;
